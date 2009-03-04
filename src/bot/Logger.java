@@ -23,7 +23,8 @@ public class Logger {
     //dbBackend = new JavaDBBackend();
     
     // TODO: pass there a server name from configuration
-    jabberConnection = new XMPPConnection("jabber.cz");
+    String jabberServer = System.getProperty("jacomo.bot.jabberServer");
+    jabberConnection = new XMPPConnection(jabberServer);
     
     rosterListener = new RosterListener() {
         public void entriesAdded(Collection<String> addresses) {
@@ -38,6 +39,7 @@ public class Logger {
         }
         public void entriesUpdated(Collection<String> addresses) {
           // nothing
+          // TODO: update contact name change
         }
         public void presenceChanged(Presence presence) {
           Date date = Calendar.getInstance().getTime();
@@ -83,7 +85,11 @@ public class Logger {
     try {
       jabberConnection.connect();
       // TODO: pass there login details from configuration
-      jabberConnection.login("bohous", "elensila");
+      
+      jabberConnection.login(
+              System.getProperty("jacomo.bot.jabberUser"),
+              System.getProperty("jacomo.bot.jabberPassword")
+          );
     } catch(XMPPException e) {
       System.out.println(e);
       return;
@@ -171,15 +177,15 @@ public class Logger {
   
   
 //  public class Contact {
-//    public String name;
+//    public String jid;
 ////    public int id;
 //    
-//    public Contact(String name) {
-//      this.name = name;
+//    public Contact(String jid) {
+//      this.jid = jid;
 //    }
 //    
-////    public Contact(String name, int id) {
-////      this.name = name;
+////    public Contact(String jid, int id) {
+////      this.jid = jid;
 ////      this.id = id;
 ////    }
 //    
@@ -189,20 +195,24 @@ public class Logger {
 //        return false;
 //      }
 //      Contact other = (Contact)o;
-//      return name.equals(other.name);
+//      return jid.equals(other.jid);
 //    }
 //
 //    @Override
 //    public int hashCode() {
 //      int hash = 5;
-//      hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
+//      hash = 89 * hash + (this.jid != null ? this.jid.hashCode() : 0);
 //      return hash;
 //    }
 //  }
   
   public enum PresenceStatus {
     OFFLINE,
-    ONLINE
+    ONLINE; // use more modes: see Presence.Mode
+    
+    public boolean isOnline(PresenceStatus status) {
+      return status != OFFLINE;
+    }
   }
   
   public enum LoggerState {
