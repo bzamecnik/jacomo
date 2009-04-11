@@ -22,8 +22,12 @@ public class Logger {
     dbBackend = new DummyDBBackend();
     //dbBackend = new JavaDBBackend();
     
-    // TODO: pass there a server name from configuration
     String jabberServer = System.getProperty("jacomo.bot.jabberServer");
+    System.out.println("jabber server: " + jabberServer);
+    if (jabberServer == null) {
+      System.out.println("jacomo.bot.jabberServer is not specified.");
+      return;
+    }
     jabberConnection = new XMPPConnection(jabberServer);
     
     rosterListener = new RosterListener() {
@@ -84,8 +88,6 @@ public class Logger {
     System.out.println("Logger.login()");
     try {
       jabberConnection.connect();
-      // TODO: pass there login details from configuration
-      
       jabberConnection.login(
               System.getProperty("jacomo.bot.jabberUser"),
               System.getProperty("jacomo.bot.jabberPassword")
