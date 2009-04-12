@@ -15,8 +15,8 @@ import java.util.Date;
  */
 public class DummyDBBackend implements DBBackend {
 
-  public int enableContact(String contact) {
-    System.out.println("enable contact: " + contact);
+  public int enableContact(String contact, String name) {
+    System.out.println("enable contact: " + contact + "(" + name + ")");
     return 0;
   }
 

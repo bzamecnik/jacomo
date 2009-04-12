@@ -24,7 +24,7 @@ public interface DBBackend {
    * Add a new contact or enable an archived one.
    * @return id of the contact
    */
-  int enableContact(String contact);
+  int enableContact(String contact, String name);
   
   /**
    * Disable a contact, ie. archive it.

@@ -13,171 +13,191 @@ import org.jivesoftware.smack.packet.*;
  */
 public class Logger {
 
-  public Logger() {
-    System.out.println("Logger()");
-    state = LoggerState.NOT_PREPARED;
-    
-    contactsCache = new java.util.HashSet<String>();
-    
-    dbBackend = new DummyDBBackend();
-    //dbBackend = new JavaDBBackend();
-    
-    String jabberServer = System.getProperty("jacomo.bot.jabberServer");
-    System.out.println("jabber server: " + jabberServer);
-    if (jabberServer == null) {
-      System.out.println("jacomo.bot.jabberServer is not specified.");
-      return;
-    }
-    jabberConnection = new XMPPConnection(jabberServer);
-    
-    rosterListener = new RosterListener() {
-        public void entriesAdded(Collection<String> addresses) {
-          for (String address : addresses) {
-            enableContact(address);
-          }
+    public Logger() {
+        System.out.println("Logger()");
+        state = LoggerState.NOT_PREPARED;
+
+        contactsCache = new java.util.HashSet<String>();
+
+        //dbBackend = new DummyDBBackend();
+        dbBackend = new JavaDBBackend();
+
+        String jabberServer = System.getProperty("jacomo.bot.jabberServer");
+        System.out.println("jabber server: " + jabberServer);
+        if (jabberServer == null) {
+            System.out.println("jacomo.bot.jabberServer is not specified.");
+            return;
         }
-        public void entriesDeleted(Collection<String> addresses) {
-          for (String address : addresses) {
-            disableContact(address);
-          }
+        jabberConnection = new XMPPConnection(jabberServer);
+
+        rosterListener = new RosterListener() {
+            public void entriesAdded(Collection<String> addresses) {
+                for (String address : addresses) {
+                    address = stripJID(address);
+                    System.out.println("entry added: " + address);
+                    enableContact(address);
+                }
+            }
+
+            public void entriesDeleted(Collection<String> addresses) {
+                for (String address : addresses) {
+                    address = stripJID(address);
+                    System.out.println("entry deleted: " + address);
+                    disableContact(address);
+                }
+            }
+
+            public void entriesUpdated(Collection<String> addresses) {
+                 // TODO: update contact name change
+                 for (String address : addresses) {
+                     address = stripJID(address);
+                     System.out.println("entry updated: " + address);
+                 }
+            }
+
+            public void presenceChanged(Presence presence) {
+                Date date = Calendar.getInstance().getTime();
+                String contact = stripJID(presence.getFrom());
+                if (contact != null) {
+                    PresenceStatus status =
+                            (presence.getType() == Presence.Type.available)
+                            ? PresenceStatus.ONLINE : PresenceStatus.OFFLINE;
+                    String statusDesctiption = presence.getStatus();
+                    System.out.println("status changed: " + contact + " at " +
+                            date + ": " + status + " ("+ statusDesctiption + ")");
+                    changeContactStatus(contact, date, status, statusDesctiption);
+                }
+            }
+        };
+    }
+
+    /**
+     * Start logging.
+     */
+    public void start() {
+        System.out.println("Logger.start()");
+        if (state == LoggerState.PREPARED) {
+            registerJabberHandlers();
+            state = LoggerState.RUNNING;
         }
-        public void entriesUpdated(Collection<String> addresses) {
-          // nothing
-          // TODO: update contact name change
+    }
+
+    /**
+     * Stop logging.
+     */
+    public void stop() {
+        System.out.println("Logger.stop()");
+        if (state == LoggerState.RUNNING) {
+            unregisterJabberHandlers();
+            state = LoggerState.PREPARED;
         }
-        public void presenceChanged(Presence presence) {
-          Date date = Calendar.getInstance().getTime();
-          String contact = presence.getFrom();
-          if (contact != null) {
-            PresenceStatus status =
-                    ((presence.getType() == Presence.Type.available)
-                    ? PresenceStatus.ONLINE : PresenceStatus.OFFLINE);
-            String statusDesctiption = presence.getStatus();
-            changeContactStatus(contact, date, status, statusDesctiption);
-          }
+    }
+
+    /**
+     * Start a Jabber session.
+     */
+    public void login() {
+        System.out.println("Logger.login()");
+        try {
+            jabberConnection.connect();
+            jabberConnection.login(
+                    System.getProperty("jacomo.bot.jabberUser"),
+                    System.getProperty("jacomo.bot.jabberPassword"));
+        } catch (XMPPException e) {
+            System.out.println(e);
+            return;
         }
-    };
-  }
-  
-  /**
-   * Start logging.
-   */
-  public void start() {
-    System.out.println("Logger.start()");
-    if(state == LoggerState.PREPARED) {
-      registerJabberHandlers();
-      state = LoggerState.RUNNING;
+
+        // TODO: synchronize contacts in roster with contacts in the database
+        // TODO: load contacts from database to contactsCache
+
+        // for now just load contacts from the roster to the cache
+        Roster roster = jabberConnection.getRoster();
+        for (RosterEntry entry : roster.getEntries()) {
+            enableContact(stripJID(entry.getUser()), entry.getName());
+        }
+
+        state = LoggerState.PREPARED;
     }
-  }
-  
-  /**
-   * Stop logging.
-   */
-  public void stop() {
-    System.out.println("Logger.stop()");
-    if(state == LoggerState.RUNNING) {
-      unregisterJabberHandlers();
-      state = LoggerState.PREPARED;
+
+    /**
+     * Stop a Jabber session.
+     */
+    public void logout() {
+        System.out.println("Logger.logout()");
+        if ((state == LoggerState.PREPARED) && jabberConnection.isConnected()) {
+            jabberConnection.disconnect();
+            state = LoggerState.NOT_PREPARED;
+        }
     }
-  }
-  
-  /**
-   * Start a Jabber session.
-   */
-  public void login() {
-    System.out.println("Logger.login()");
-    try {
-      jabberConnection.connect();
-      jabberConnection.login(
-              System.getProperty("jacomo.bot.jabberUser"),
-              System.getProperty("jacomo.bot.jabberPassword")
-          );
-    } catch(XMPPException e) {
-      System.out.println(e);
-      return;
+
+    /**
+     * Add a new contact or enable an archived one.
+     */
+    void enableContact(String contact, String name) {
+        if (contact != null) {
+            dbBackend.enableContact(contact, name);
+            contactsCache.add(contact);
+        }
     }
-    
-    // TODO: synchronize contacts in roster with contacts in the database
-    // TODO: load contacts from database to contactsCache
-    
-    // for now just load contacts from the roster to the cache
-    Roster roster = jabberConnection.getRoster();
-    for (RosterEntry entry : roster.getEntries()) {
-      enableContact(entry.getUser());
+
+    void enableContact(String contact) {
+        Roster roster = jabberConnection.getRoster();
+        RosterEntry entry = roster.getEntry(contact);
+        enableContact(contact, (entry != null) ? entry.getName() : "");
     }
-    
-    state = LoggerState.PREPARED;
-  }
-  
-  /**
-   * Stop a Jabber session.
-   */
-  public void logout() {
-    System.out.println("Logger.logout()");
-    if ((state == LoggerState.PREPARED) && jabberConnection.isConnected())
-    {
-      jabberConnection.disconnect();
-      state = LoggerState.NOT_PREPARED;
+
+    /**
+     * Disable a contact, ie. archive it.
+     */
+    void disableContact(String contact) {
+        if (contact != null) {
+            dbBackend.disableContact(contact);
+            contactsCache.remove(contact);
+        }
     }
-  }
-  
-  /**
-   * Add a new contact or enable an archived one.
-   */
-  void enableContact(String contact) {
-    if (contact != null) {
-      dbBackend.enableContact(contact);
-      contactsCache.add(contact);
+
+    boolean contactExists(String contact) {
+        return contactsCache.contains(contact);
     }
-  }
-  
-  /**
-   * Disable a contact, ie. archive it.
-   */
-  void disableContact(String contact) {
-    if (contact != null) {
-      dbBackend.disableContact(contact);
-      contactsCache.remove(contact);
+
+    /**
+     * Store a change in status of a contact.
+     */
+    void changeContactStatus(
+            String contact,
+            Date date,
+            PresenceStatus status,
+            String statusDesctiption) {
+        if (!contactExists(contact)) {
+            enableContact(contact);
+        }
+        dbBackend.changeContactStatus(contact, date, status, statusDesctiption);
     }
-  }
-  
-  boolean contactExists(String contact) {
-    return contactsCache.contains(contact);
-  }
-  
-  /**
-   * Store a change in status of a contact.
-   */
-  void changeContactStatus(
-          String contact,
-          Date date,
-          PresenceStatus status,
-          String statusDesctiption
-          )
-  {
-    if (!contactExists(contact)) {
-      enableContact(contact);
+
+    /**
+     * Register handlers to events from a Jabber session.
+     */
+    void registerJabberHandlers() {
+        Roster roster = jabberConnection.getRoster();
+        roster.addRosterListener(rosterListener);
     }
-    dbBackend.changeContactStatus(contact, date, status, statusDesctiption);
-  }
-  
-  /**
-   * Register handlers to events from a Jabber session.
-   */
-  void registerJabberHandlers() {
-    Roster roster = jabberConnection.getRoster();
-    roster.addRosterListener(rosterListener);
-  }
-  
-  /**
-   * Unregister handlers to events from a Jabber session.
-   */
-  void unregisterJabberHandlers() {
-    Roster roster = jabberConnection.getRoster();
-    roster.removeRosterListener(rosterListener);
-  }
-  
-  
+
+    /**
+     * Unregister handlers to events from a Jabber session.
+     */
+    void unregisterJabberHandlers() {
+        Roster roster = jabberConnection.getRoster();
+        roster.removeRosterListener(rosterListener);
+    }
+
+    /**
+     * Strip the resource part from a JID.
+     */
+    String stripJID(String jid) {
+        return jid.replaceFirst("/.*", "");
+    }
+
 //  public class Contact {
 //    public String jid;
 ////    public int id;
@@ -207,31 +227,29 @@ public class Logger {
 //      return hash;
 //    }
 //  }
-  
-  public enum PresenceStatus {
-    OFFLINE,
-    ONLINE; // use more modes: see Presence.Mode
-    
-    public boolean isOnline(PresenceStatus status) {
-      return status != OFFLINE;
+    public enum PresenceStatus {
+
+        OFFLINE,
+        ONLINE; // use more modes: see Presence.Mode
+
+        public boolean isOnline(PresenceStatus status) {
+            return status != OFFLINE;
+        }
     }
-  }
-  
-  public enum LoggerState {
-    RUNNING,
-    PREPARED,
-    NOT_PREPARED,
-    //ERROR       
-  }
-  
-  DBBackend dbBackend;
-  
-  XMPPConnection jabberConnection; // Jabber backend
-  //java.util.Map<Integer, Contact> contactsCache;
-  //java.util.Set<Contact> contactsCache;
-  // a cache of contact that haven't been archive (ie. disabled)
-  Set<String> contactsCache;
-  LoggerState state;
-  
-  RosterListener rosterListener;
+
+    public enum LoggerState {
+
+        RUNNING,
+        PREPARED,
+        NOT_PREPARED,
+        //ERROR
+    }
+    DBBackend dbBackend;
+    XMPPConnection jabberConnection; // Jabber backend
+    //java.util.Map<Integer, Contact> contactsCache;
+    //java.util.Set<Contact> contactsCache;
+    // a cache of contact that haven't been archive (ie. disabled)
+    Set<String> contactsCache;
+    LoggerState state;
+    RosterListener rosterListener;
 }
