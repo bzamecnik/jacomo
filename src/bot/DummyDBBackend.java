@@ -37,7 +37,7 @@ public class DummyDBBackend implements DBBackend {
         System.out.println("update contact name: " + contact + ", " + name);
     }
 
-    public void changeOwnPresence(boolean online) {
+    public void changeBotPresence(boolean online) {
         System.out.println("change own presence: " + (online ? "ONLINE" : "OFFLINE"));
     }
 

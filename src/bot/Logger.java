@@ -94,7 +94,7 @@ public class Logger {
             state = LoggerState.RUNNING;
         }
         // write ONLINE to own presence log
-        dbBackend.changeOwnPresence(true);
+        dbBackend.changeBotPresence(true);
     }
 
     /**
@@ -107,7 +107,7 @@ public class Logger {
             state = LoggerState.PREPARED;
         }
         // write OFFLINE to own presence log
-        dbBackend.changeOwnPresence(false);
+        dbBackend.changeBotPresence(false);
     }
 
     /**

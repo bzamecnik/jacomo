@@ -7,6 +7,11 @@ package bot;
 public class BotApplication {
 
     public static void main(String[] args) {
+        // TODO: run either Bot deamon or Stats GUI based on arguments
+        runBot();
+    }
+
+    static void runBot() {
         initProperties();
 
         System.out.println("JaCoMo");
@@ -20,7 +25,8 @@ public class BotApplication {
         try {
             logger.login();
         } catch (JacomoException ex) {
-            System.err.println("Can't log in to the jabber server: " + ex.getMessage());
+            System.err.println("Can't log in to the jabber server: "
+                    + ex.getMessage());
             return;
         }
         logger.start();

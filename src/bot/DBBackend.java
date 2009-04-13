@@ -39,7 +39,7 @@ public interface DBBackend {
     /**
      * Write to own presence log.
      */
-    void changeOwnPresence(boolean online);
+    void changeBotPresence(boolean online);
 
     /**
      * Get list of contacts stored in the database.

@@ -4,6 +4,7 @@ package bot;
 import bot.Logger.PresenceStatus;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.sql.Connection;
@@ -14,7 +15,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Calendar;
 
 /**
  *
@@ -28,10 +28,13 @@ public class JavaDBBackend implements DBBackend {
         String dbName = System.getProperty("jacomo.dbName");
         String strUrl = "jdbc:derby:" + dbName + ";create=true";
         String homeDir = System.getProperty("jacomo.homeDir", ".");
+        System.out.println("home directory:" + homeDir);
+
         // create the home directory if it doesn't exist
         File homeDirFile = new File(homeDir);
         homeDirFile.mkdirs();
-        //System.setProperty("derby.system.home", homeDir);
+        // TODO:
+        System.setProperty("derby.system.home", homeDir);
 
         dbConnection = null;
 
@@ -68,32 +71,33 @@ public class JavaDBBackend implements DBBackend {
             stmtUpdateContactName = dbConnection.prepareStatement(
                     "UPDATE Contacts SET name = ? WHERE id = ?");
 
-            stmtInsertContactStatusChange = dbConnection.prepareStatement(
-                    "INSERT INTO StatusChanges " +
+            stmtInsertContactPresenceChange = dbConnection.prepareStatement(
+                    "INSERT INTO ContactPresenceLog " +
                     "   (contactId, time, status, statusDesc) " +
                     "VALUES (?, ?, ?, ?)");
 
-            stmtInsertOwnPresenceChange = dbConnection.prepareStatement(
-                    "INSERT INTO OwnPresenceLog (time, online) VALUES (?, ?)");
+            stmtInsertBotPresenceChange = dbConnection.prepareStatement(
+                    "INSERT INTO BotPresenceLog (time, online) VALUES (?, ?)");
         } catch (SQLException ex) {
             //ex.printStackTrace();
             throw new JacomoException("Problem with database: " + ex.getMessage());
         }
     }
 
-    void loadDriver() {
+    void loadDriver() throws JacomoException {
         try {
             Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
             System.out.println("Loaded JavaDB driver.");
         } catch (ClassNotFoundException ex) {
-            System.err.println("Can't load JavaDB driver. Check the CLASSPATH.");
-            ex.printStackTrace(System.err);
+            throw new JacomoException(
+                    "Can't load JavaDB driver. Check the CLASSPATH." +
+                    ex.getMessage());
         } catch (InstantiationException ex) {
-            System.err.println("Can't instantiate JavaDB driver.");
-            ex.printStackTrace(System.err);
+            throw new JacomoException("Can't instantiate JavaDB driver." +
+                    ex.getMessage());
         } catch (IllegalAccessException ex) {
-            System.err.println("Can't access JavaDB driver.");
-            ex.printStackTrace(System.err);
+            throw new JacomoException("Can't access JavaDB driver." +
+                    ex.getMessage());
         }
     }
 
@@ -105,30 +109,33 @@ public class JavaDBBackend implements DBBackend {
                 "      (START WITH 1, INCREMENT BY 1), " +
                 "jid   VARCHAR(100) NOT NULL UNIQUE, " +
                 "name  VARCHAR(100), " +
-                // TODO: use CONSTRAINT CHECK
-                "archived   CHAR(1) )"; // 'Y' = archived, 'N' = active
+                // 'Y' = archived, 'N' = active
+                "archived   CHAR(1) CONSTRAINT archived_CK" +
+                "    CHECK (archived IN ('Y', 'N')))";
 
         // log of online presence changes of contacts
-        String strCreateTableStatusChanges =
-                "CREATE TABLE StatusChanges (" +
+        String strCreateTableContactPresenceLog =
+                "CREATE TABLE ContactPresenceLog (" +
                 "contactId    INTEGER NOT NULL " +
-                "CONSTRAINT Contacts_FK REFERENCES Contacts (id), " +
+                "    CONSTRAINT Contacts_FK REFERENCES Contacts (id), " +
                 "time   TIMESTAMP NOT NULL, " +
                 "status   VARCHAR(20) NOT NULL, " +
                 "statusDesc  LONG VARCHAR ) "; // status description
 
         // log of online presence of JaCoMo itself
-        String strCreateTableOwnPresenceLog =
-                "CREATE TABLE OwnPresenceLog (" +
+        String strCreateTableBotPresenceLog =
+                "CREATE TABLE BotPresenceLog (" +
                 "time   TIMESTAMP NOT NULL PRIMARY KEY, " +
-                "online   CHAR(1) )"; // 'Y' = on-line, 'N' = off-line
+                // 'Y' = on-line, 'N' = off-line
+                "online   CHAR(1) CONSTRAINT online_CK" +
+                "    CHECK (online IN ('Y', 'N')))";
 
         Statement statement = null;
         try {
             statement = dbConnection.createStatement();
             statement.execute(strCreateTableContacts);
-            statement.execute(strCreateTableStatusChanges);
-            statement.execute(strCreateTableOwnPresenceLog);
+            statement.execute(strCreateTableContactPresenceLog);
+            statement.execute(strCreateTableBotPresenceLog);
         // or use:
         //statement.addBatch(...)
         //statement.executeBatch()
@@ -166,8 +173,8 @@ public class JavaDBBackend implements DBBackend {
                 //   - no: insert the contact into the table and get the generated 'id'
                 stmtInsertContact.clearParameters();
                 stmtInsertContact.setString(1, contact);
-                stmtInsertContact.setString(2, name); // TODO: set name
-                stmtInsertContact.setString(3, "N"); // TODO: set name
+                stmtInsertContact.setString(2, name);
+                stmtInsertContact.setString(3, "N");
                 stmtInsertContact.executeUpdate();
                 rs = stmtInsertContact.getGeneratedKeys();
                 if (rs.next()) {
@@ -208,27 +215,27 @@ public class JavaDBBackend implements DBBackend {
         System.out.println("id: " + id);
         if (id != -1) {
             try {
-                stmtInsertContactStatusChange.clearParameters();
-                stmtInsertContactStatusChange.setInt(1, id);
-                stmtInsertContactStatusChange.setTimestamp(2, new Timestamp(date.getTime()));
-                stmtInsertContactStatusChange.setString(3, status.isOnline(status) ? "Y" : "N");
-                stmtInsertContactStatusChange.setString(4, statusDesctiption);
-                stmtInsertContactStatusChange.executeUpdate();
+                stmtInsertContactPresenceChange.clearParameters();
+                stmtInsertContactPresenceChange.setInt(1, id);
+                stmtInsertContactPresenceChange.setTimestamp(2, new Timestamp(date.getTime()));
+                stmtInsertContactPresenceChange.setString(3, status.isOnline(status) ? "Y" : "N");
+                stmtInsertContactPresenceChange.setString(4, statusDesctiption);
+                stmtInsertContactPresenceChange.executeUpdate();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    public void changeOwnPresence(boolean online) {
+    public void changeBotPresence(boolean online) {
         Date date = Calendar.getInstance().getTime();
-        System.out.println("change own presence: " +
+        System.out.println("change in bot presence: " +
                 (online ? "ONLINE" : "OFFLINE") + ", " + date.getTime());
         try {
-            stmtInsertOwnPresenceChange.clearParameters();
-            stmtInsertOwnPresenceChange.setTimestamp(1, new Timestamp(date.getTime()));
-            stmtInsertOwnPresenceChange.setString(2, online ? "Y" : "N");
-            stmtInsertOwnPresenceChange.executeUpdate();
+            stmtInsertBotPresenceChange.clearParameters();
+            stmtInsertBotPresenceChange.setTimestamp(1, new Timestamp(date.getTime()));
+            stmtInsertBotPresenceChange.setString(2, online ? "Y" : "N");
+            stmtInsertBotPresenceChange.executeUpdate();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -279,8 +286,8 @@ public class JavaDBBackend implements DBBackend {
     }
     Connection dbConnection;
     PreparedStatement stmtInsertContact;
-    PreparedStatement stmtInsertContactStatusChange;
-    PreparedStatement stmtInsertOwnPresenceChange;
+    PreparedStatement stmtInsertContactPresenceChange;
+    PreparedStatement stmtInsertBotPresenceChange;
     PreparedStatement stmtSelectContacts;
     PreparedStatement stmtSelectContactByJid;
     PreparedStatement stmtUpdateContactArchived;
