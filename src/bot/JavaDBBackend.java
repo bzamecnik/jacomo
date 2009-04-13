@@ -3,7 +3,9 @@ package bot;
 //import bot.Logger.Contact;
 import bot.Logger.PresenceStatus;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -12,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Calendar;
 
 /**
  *
@@ -19,7 +22,7 @@ import java.sql.Timestamp;
  */
 public class JavaDBBackend implements DBBackend {
 
-    public JavaDBBackend() {
+    public JavaDBBackend() throws JacomoException {
         loadDriver();
 
         String dbName = System.getProperty("jacomo.dbName");
@@ -53,18 +56,28 @@ public class JavaDBBackend implements DBBackend {
                     "VALUES (?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
 
+            stmtSelectContacts =  dbConnection.prepareStatement(
+                    "SELECT jid FROM Contacts WHERE archived = ?");
+
             stmtSelectContactByJid = dbConnection.prepareStatement(
                     "SELECT id, archived FROM Contacts WHERE jid = ?");
 
             stmtUpdateContactArchived = dbConnection.prepareStatement(
                     "UPDATE Contacts SET archived = ? WHERE id = ?");
 
-            stmtInsertStatusChange = dbConnection.prepareStatement(
+            stmtUpdateContactName = dbConnection.prepareStatement(
+                    "UPDATE Contacts SET name = ? WHERE id = ?");
+
+            stmtInsertContactStatusChange = dbConnection.prepareStatement(
                     "INSERT INTO StatusChanges " +
                     "   (contactId, time, status, statusDesc) " +
                     "VALUES (?, ?, ?, ?)");
+
+            stmtInsertOwnPresenceChange = dbConnection.prepareStatement(
+                    "INSERT INTO OwnPresenceLog (time, online) VALUES (?, ?)");
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
+            throw new JacomoException("Problem with database: " + ex.getMessage());
         }
     }
 
@@ -143,11 +156,13 @@ public class JavaDBBackend implements DBBackend {
                     //   - yes: set 'archived' to 'N'
                     stmtUpdateContactArchived.clearParameters();
                     stmtUpdateContactArchived.setString(1, "N");
-                    stmtUpdateContactArchived.setInt(1, id);
+                    stmtUpdateContactArchived.setInt(2, id);
                     stmtUpdateContactArchived.executeUpdate();
                 }
             } else {
-                if (name == null) name = "";
+                if (name == null) {
+                    name = "";
+                }
                 //   - no: insert the contact into the table and get the generated 'id'
                 stmtInsertContact.clearParameters();
                 stmtInsertContact.setString(1, contact);
@@ -166,26 +181,21 @@ public class JavaDBBackend implements DBBackend {
     }
 
     public void disableContact(String contact) {
-        // - look into Contacts table if we already have this contact
-        int id = -1;
-        try {
-            stmtSelectContactByJid.clearParameters();
-            stmtSelectContactByJid.setString(1, contact);
-            ResultSet rs = stmtSelectContactByJid.executeQuery();
-            if (rs.next()) {
-                id = rs.getInt(1);
-            }
-            if (id != -1) {
-                //   - yes: set 'archived' to 'Y'
+        // look into Contacts table if the contact is already there
+        int id = getContactId(contact);
+        System.out.println("id: " + id);
+        if (id != -1) {
+            // - yes: set 'archived' to 'Y'
+            try {
                 stmtUpdateContactArchived.clearParameters();
                 stmtUpdateContactArchived.setString(1, "Y");
-                stmtUpdateContactArchived.setInt(1, id);
+                stmtUpdateContactArchived.setInt(2, id);
                 stmtUpdateContactArchived.executeUpdate();
-            } else {
-                //   - no: nothing (probably report an error)
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        } else {
+            // - no: nothing (probably report an error)
         }
     }
 
@@ -193,8 +203,67 @@ public class JavaDBBackend implements DBBackend {
             String contact,
             Date date,
             PresenceStatus status,
-            String statusDesctiption)
-    {
+            String statusDesctiption) {
+        int id = getContactId(contact);
+        System.out.println("id: " + id);
+        if (id != -1) {
+            try {
+                stmtInsertContactStatusChange.clearParameters();
+                stmtInsertContactStatusChange.setInt(1, id);
+                stmtInsertContactStatusChange.setTimestamp(2, new Timestamp(date.getTime()));
+                stmtInsertContactStatusChange.setString(3, status.isOnline(status) ? "Y" : "N");
+                stmtInsertContactStatusChange.setString(4, statusDesctiption);
+                stmtInsertContactStatusChange.executeUpdate();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public void changeOwnPresence(boolean online) {
+        Date date = Calendar.getInstance().getTime();
+        System.out.println("change own presence: " +
+                (online ? "ONLINE" : "OFFLINE") + ", " + date.getTime());
+        try {
+            stmtInsertOwnPresenceChange.clearParameters();
+            stmtInsertOwnPresenceChange.setTimestamp(1, new Timestamp(date.getTime()));
+            stmtInsertOwnPresenceChange.setString(2, online ? "Y" : "N");
+            stmtInsertOwnPresenceChange.executeUpdate();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void updateContactName(String contact, String name) {
+        int id = getContactId(contact);
+        if (id != -1) {
+            try {
+                stmtUpdateContactName.clearParameters();
+                stmtUpdateContactName.setString(1, name);
+                stmtUpdateContactName.setInt(2, id);
+                stmtUpdateContactName.executeUpdate();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public List<String> getContactsList() {
+        List<String> contacts = new ArrayList<String>();
+        try {
+            stmtSelectContacts.clearParameters();
+            stmtSelectContacts.setString(1, "N"); // not archived
+            ResultSet rs = stmtSelectContacts.executeQuery();
+            if (rs.next()) {
+                contacts.add(rs.getString(1));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return contacts;
+    }
+
+    int getContactId(String contact) {
         int id = -1;
         try {
             stmtSelectContactByJid.clearParameters();
@@ -203,20 +272,18 @@ public class JavaDBBackend implements DBBackend {
             if (rs.next()) {
                 id = rs.getInt(1);
             }
-            if (id != -1) {
-                stmtInsertStatusChange.clearParameters();
-                stmtInsertStatusChange.setInt(1, id);
-                stmtInsertStatusChange.setTimestamp(2, new Timestamp(date.getTime()));
-                stmtInsertStatusChange.setString(3, status.isOnline(status) ? "Y" : "N");
-                stmtInsertStatusChange.setString(4, statusDesctiption);
-            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+        return id;
     }
     Connection dbConnection;
     PreparedStatement stmtInsertContact;
+    PreparedStatement stmtInsertContactStatusChange;
+    PreparedStatement stmtInsertOwnPresenceChange;
+    PreparedStatement stmtSelectContacts;
     PreparedStatement stmtSelectContactByJid;
     PreparedStatement stmtUpdateContactArchived;
-    PreparedStatement stmtInsertStatusChange;
+    PreparedStatement stmtUpdateContactName;
+    
 }

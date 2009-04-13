@@ -10,8 +10,19 @@ public class BotApplication {
         initProperties();
 
         System.out.println("JaCoMo");
-        Logger logger = new Logger();
-        logger.login();
+        Logger logger = null;
+        try {
+            logger = new Logger();
+        } catch (JacomoException ex) {
+            System.err.println("Can't create Logger: " + ex.getMessage());
+            return;
+        }
+        try {
+            logger.login();
+        } catch (JacomoException ex) {
+            System.err.println("Can't log in to the jabber server: " + ex.getMessage());
+            return;
+        }
         logger.start();
 
         System.out.println("Type \"exit\" to shut down the program.");
@@ -32,8 +43,8 @@ public class BotApplication {
         // System.setProperties(p);
 
         System.setProperty("jacomo.bot.jabberServer", "jabber.cz");
-        System.setProperty("jacomo.bot.jabberUser", "bohous");
-        System.setProperty("jacomo.bot.jabberPassword", "elensila");
+        System.setProperty("jacomo.bot.jabberUser", "jacomobot");
+        System.setProperty("jacomo.bot.jabberPassword", "comchabo");
 
         System.setProperty("jacomo.homeDir",
                 System.getProperty("user.home", ".") + "/.jacomo");
