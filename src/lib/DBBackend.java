@@ -1,7 +1,6 @@
-package bot;
+package lib;
 
 //import bot.Logger.Contact;
-import bot.Logger.PresenceStatus;
 import java.util.Date;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public interface DBBackend {
     /**
      * Store a change in status of a contact.
      */
-    void changeContactStatus(
+    void changeContactPresence(
             String contact,
             Date date,
             PresenceStatus status,
@@ -44,6 +43,11 @@ public interface DBBackend {
     /**
      * Get list of contacts stored in the database.
      */
-    List<String> getContactsList();
+    List<Contact> getContactsList();
 
+    List<PresenceChange> getBotPresenceChangesList();
+
+    List<PresenceChange> getPresenceChangesList();
+
+    List<PresenceChange> getContactPresenceChangesList(int contactId);
 }

@@ -1,7 +1,7 @@
-package bot;
+package lib;
 
 //import bot.Logger.Contact;
-import bot.Logger.PresenceStatus;
+import lib.PresenceStatus;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class DummyDBBackend implements DBBackend {
         System.out.println("disable contact: " + contact);
     }
 
-    public void changeContactStatus(
+    public void changeContactPresence(
             String contact,
             Date date,
             PresenceStatus status,
@@ -41,7 +41,20 @@ public class DummyDBBackend implements DBBackend {
         System.out.println("change own presence: " + (online ? "ONLINE" : "OFFLINE"));
     }
 
-    public List<String> getContactsList() {
-        return new ArrayList<String>();
+    public List<Contact> getContactsList() {
+        return new ArrayList<Contact>();
     }
+
+    public List<PresenceChange> getBotPresenceChangesList() {
+        return new ArrayList<PresenceChange>();
+    }
+
+    public List<PresenceChange> getPresenceChangesList() {
+        return new ArrayList<PresenceChange>();
+    }
+
+    public List<PresenceChange> getContactPresenceChangesList(int contactId) {
+        return new ArrayList<PresenceChange>();
+    }
+
 }

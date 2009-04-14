@@ -1,7 +1,5 @@
-package bot;
+package lib;
 
-//import bot.Logger.Contact;
-import bot.Logger.PresenceStatus;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -60,10 +58,17 @@ public class JavaDBBackend implements DBBackend {
                     Statement.RETURN_GENERATED_KEYS);
 
             stmtSelectContacts =  dbConnection.prepareStatement(
-                    "SELECT jid FROM Contacts WHERE archived = ?");
+                    "SELECT id, jid, name FROM Contacts WHERE archived = ?");
 
             stmtSelectContactByJid = dbConnection.prepareStatement(
                     "SELECT id, archived FROM Contacts WHERE jid = ?");
+
+            stmtSelectBotPresenceChanges = dbConnection.prepareStatement(
+                    "SELECT time, online FROM BotPresenceLog ORDER BY time");
+
+            stmtSelectContactsPresenceChanges = dbConnection.prepareStatement(
+                    "SELECT contactId, time, online, status, statusDesc " +
+                    "    FROM ContactPresenceLog ORDER BY contactId, time");
 
             stmtUpdateContactArchived = dbConnection.prepareStatement(
                     "UPDATE Contacts SET archived = ? WHERE id = ?");
@@ -73,8 +78,8 @@ public class JavaDBBackend implements DBBackend {
 
             stmtInsertContactPresenceChange = dbConnection.prepareStatement(
                     "INSERT INTO ContactPresenceLog " +
-                    "   (contactId, time, status, statusDesc) " +
-                    "VALUES (?, ?, ?, ?)");
+                    "   (contactId, time, online, status, statusDesc) " +
+                    "VALUES (?, ?, ?, ?, ?)");
 
             stmtInsertBotPresenceChange = dbConnection.prepareStatement(
                     "INSERT INTO BotPresenceLog (time, online) VALUES (?, ?)");
@@ -110,7 +115,7 @@ public class JavaDBBackend implements DBBackend {
                 "jid   VARCHAR(100) NOT NULL UNIQUE, " +
                 "name  VARCHAR(100), " +
                 // 'Y' = archived, 'N' = active
-                "archived   CHAR(1) CONSTRAINT archived_CK" +
+                "archived   CHAR(1) CONSTRAINT archived_CK " +
                 "    CHECK (archived IN ('Y', 'N')))";
 
         // log of online presence changes of contacts
@@ -119,6 +124,8 @@ public class JavaDBBackend implements DBBackend {
                 "contactId    INTEGER NOT NULL " +
                 "    CONSTRAINT Contacts_FK REFERENCES Contacts (id), " +
                 "time   TIMESTAMP NOT NULL, " +
+                "online   CHAR(1) CONSTRAINT contact_online_CK " +
+                "    CHECK (online IN ('Y', 'N')), " +
                 "status   VARCHAR(20) NOT NULL, " +
                 "statusDesc  LONG VARCHAR ) "; // status description
 
@@ -127,7 +134,7 @@ public class JavaDBBackend implements DBBackend {
                 "CREATE TABLE BotPresenceLog (" +
                 "time   TIMESTAMP NOT NULL PRIMARY KEY, " +
                 // 'Y' = on-line, 'N' = off-line
-                "online   CHAR(1) CONSTRAINT online_CK" +
+                "online   CHAR(1) CONSTRAINT bot_online_CK " +
                 "    CHECK (online IN ('Y', 'N')))";
 
         Statement statement = null;
@@ -206,7 +213,7 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
-    public void changeContactStatus(
+    public void changeContactPresence(
             String contact,
             Date date,
             PresenceStatus status,
@@ -219,7 +226,8 @@ public class JavaDBBackend implements DBBackend {
                 stmtInsertContactPresenceChange.setInt(1, id);
                 stmtInsertContactPresenceChange.setTimestamp(2, new Timestamp(date.getTime()));
                 stmtInsertContactPresenceChange.setString(3, status.isOnline(status) ? "Y" : "N");
-                stmtInsertContactPresenceChange.setString(4, statusDesctiption);
+                stmtInsertContactPresenceChange.setString(4, status.toString());
+                stmtInsertContactPresenceChange.setString(5, statusDesctiption);
                 stmtInsertContactPresenceChange.executeUpdate();
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -255,19 +263,74 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
-    public List<String> getContactsList() {
-        List<String> contacts = new ArrayList<String>();
+    public List<Contact> getContactsList() {
+        List<Contact> contacts = new ArrayList<Contact>();
         try {
             stmtSelectContacts.clearParameters();
             stmtSelectContacts.setString(1, "N"); // not archived
             ResultSet rs = stmtSelectContacts.executeQuery();
             if (rs.next()) {
-                contacts.add(rs.getString(1));
+                contacts.add(new Contact(
+                        rs.getString(2), // jid
+                        rs.getString(3), // name
+                        rs.getInt(1))); // id
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         return contacts;
+    }
+
+    /**
+     * Get alist of presence changes of the bot itself.
+     * @return
+     */
+    public List<PresenceChange> getBotPresenceChangesList() {
+        List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
+        try {
+            stmtSelectBotPresenceChanges.clearParameters(); // ?
+            ResultSet rs = stmtSelectContacts.executeQuery();
+            if (rs.next()) {
+                presenceChanges.add(new PresenceChange(
+                    rs.getDate(1), // time
+                    PresenceStatus.fromBoolean(rs.getBoolean(2)) // status
+                    ));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return presenceChanges;
+    }
+
+    /**
+     * Get a list of presence changes of all the contacts.
+     * @return
+     */
+    public List<PresenceChange> getPresenceChangesList() {
+        List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
+        try {
+            stmtSelectContactsPresenceChanges.clearParameters(); // ?
+            ResultSet rs = stmtSelectContactsPresenceChanges.executeQuery();
+            if (rs.next()) {
+                presenceChanges.add(new PresenceChange(
+                    rs.getDate(2), // time
+                    PresenceStatus.fromString(rs.getString(4)), // status
+                    rs.getInt(1), // contact id
+                    rs.getString(3) // status description
+                    ));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return presenceChanges;
+    }
+
+    /**
+     * Get a list of presence changes of a specified contact.
+     * @return
+     */
+    public List<PresenceChange> getContactPresenceChangesList(int contactId) {
+        return new ArrayList<PresenceChange>(); // TODO
     }
 
     int getContactId(String contact) {
@@ -290,7 +353,8 @@ public class JavaDBBackend implements DBBackend {
     PreparedStatement stmtInsertBotPresenceChange;
     PreparedStatement stmtSelectContacts;
     PreparedStatement stmtSelectContactByJid;
+    PreparedStatement stmtSelectBotPresenceChanges;
+    PreparedStatement stmtSelectContactsPresenceChanges;
     PreparedStatement stmtUpdateContactArchived;
     PreparedStatement stmtUpdateContactName;
-    
 }

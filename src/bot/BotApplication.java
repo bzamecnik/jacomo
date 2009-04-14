@@ -1,5 +1,7 @@
 package bot;
 
+import lib.JacomoException;
+
 /**
  *
  * @author Bohouš

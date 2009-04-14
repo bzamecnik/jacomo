@@ -1,5 +1,6 @@
 package bot;
 
+import lib.*;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -72,13 +73,11 @@ public class Logger {
                 Date date = Calendar.getInstance().getTime();
                 String jid = stripJID(presence.getFrom());
                 if ((jid != null) && contactFilter.filter(jid)) {
-                    PresenceStatus status =
-                            (presence.getType() == Presence.Type.available)
-                            ? PresenceStatus.ONLINE : PresenceStatus.OFFLINE;
+                    PresenceStatus status = PresenceStatus.fromJabberPresence(presence);
                     String statusDesctiption = presence.getStatus();
                     System.out.println("status changed: " + jid + " at " +
                             date + ": " + status + " (" + statusDesctiption + ")");
-                    changeContactStatus(jid, date, status, statusDesctiption);
+                    changeContactPresence(jid, date, status, statusDesctiption);
                 }
             }
         };
@@ -141,9 +140,9 @@ public class Logger {
         // - read active (non-archived) contacts from database -> C2 set
         // convert list to set to allow set operations
         Set<String> dbActiveContacts = new HashSet<String>();
-        List<String> dbActiveContactsList = dbBackend.getContactsList();
-        for (String contact : dbActiveContactsList) {
-            dbActiveContacts.add(contact);
+        List<Contact> dbActiveContactsList = dbBackend.getContactsList();
+        for (Contact contact : dbActiveContactsList) {
+            dbActiveContacts.add(contact.getJid());
         }
         // - disable (C2 - C1) set
         dbActiveContacts.removeAll(rosterActiveContacts);
@@ -209,7 +208,7 @@ public class Logger {
     /**
      * Store a change in status of a contact.
      */
-    void changeContactStatus(
+    void changeContactPresence(
             String contact,
             Date date,
             PresenceStatus status,
@@ -217,7 +216,7 @@ public class Logger {
         if (!contactExists(contact)) {
             enableContact(contact);
         }
-        dbBackend.changeContactStatus(contact, date, status, statusDesctiption);
+        dbBackend.changeContactPresence(contact, date, status, statusDesctiption);
     }
 
     /**
@@ -241,45 +240,6 @@ public class Logger {
      */
     String stripJID(String jid) {
         return jid.replaceFirst("/.*", "");
-    }
-
-//  public class Contact {
-//    public String jid;
-////    public int id;
-//    
-//    public Contact(String jid) {
-//      this.jid = jid;
-//    }
-//    
-////    public Contact(String jid, int id) {
-////      this.jid = jid;
-////      this.id = id;
-////    }
-//    
-//    @Override
-//    public boolean equals(Object o) {
-//      if (!(o instanceof Contact)) {
-//        return false;
-//      }
-//      Contact other = (Contact)o;
-//      return jid.equals(other.jid);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//      int hash = 5;
-//      hash = 89 * hash + (this.jid != null ? this.jid.hashCode() : 0);
-//      return hash;
-//    }
-//  }
-    public enum PresenceStatus {
-
-        OFFLINE,
-        ONLINE; // use more modes: see Presence.Mode
-
-        public boolean isOnline(PresenceStatus status) {
-            return status != OFFLINE;
-        }
     }
 
     public enum LoggerState {
