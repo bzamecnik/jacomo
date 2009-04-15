@@ -1,4 +1,4 @@
-package lib;
+package org.zamecnik.jacomo.lib;
 
 import java.io.File;
 import java.util.ArrayList;

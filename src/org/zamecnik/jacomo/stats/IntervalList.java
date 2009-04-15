@@ -1,11 +1,11 @@
-package stats;
+package org.zamecnik.jacomo.stats;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
-import lib.PresenceStatus;
+import org.zamecnik.jacomo.lib.PresenceStatus;
 
 /**
  *

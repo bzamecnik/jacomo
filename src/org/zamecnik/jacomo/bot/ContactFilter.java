@@ -1,4 +1,4 @@
-package bot;
+package org.zamecnik.jacomo.bot;
 
 import java.util.*;
 

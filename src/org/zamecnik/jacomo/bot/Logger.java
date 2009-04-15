@@ -1,6 +1,6 @@
-package bot;
+package org.zamecnik.jacomo.bot;
 
-import lib.*;
+import org.zamecnik.jacomo.lib.*;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;

@@ -1,6 +1,6 @@
-package stats;
+package org.zamecnik.jacomo.stats;
 
-import lib.*;
+import org.zamecnik.jacomo.lib.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

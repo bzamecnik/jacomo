@@ -1,4 +1,4 @@
-package lib;
+package org.zamecnik.jacomo.lib;
 
 //import bot.Logger.Contact;
 import java.util.Date;

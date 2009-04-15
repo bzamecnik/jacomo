@@ -1,7 +1,7 @@
-package lib;
+package org.zamecnik.jacomo.lib;
 
 //import bot.Logger.Contact;
-import lib.PresenceStatus;
+import org.zamecnik.jacomo.lib.PresenceStatus;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;

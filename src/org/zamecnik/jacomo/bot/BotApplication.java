@@ -1,6 +1,6 @@
-package bot;
+package org.zamecnik.jacomo.bot;
 
-import lib.JacomoException;
+import org.zamecnik.jacomo.lib.JacomoException;
 
 /**
  *
