@@ -1,22 +1,30 @@
-package org.zamecnik.jacomo.bot;
+package org.zamecnik.jacomo;
 
+import org.zamecnik.jacomo.bot.*;
+import org.zamecnik.jacomo.stats.*;
 import org.zamecnik.jacomo.lib.JacomoException;
 
 /**
  *
  * @author Bohouš
  */
-public class BotApplication {
+public class JacomoApplication {
 
     public static void main(String[] args) {
         // TODO: run either Bot deamon or Stats GUI based on arguments
-        runBot();
+        if (args.length > 0) {
+            if (args[0].equals("-bot")) {
+                runBot();
+            } else if (args[0].equals("-stats")) {
+                runStats();
+            }
+        }
     }
 
     static void runBot() {
         initProperties();
 
-        System.out.println("JaCoMo");
+        System.out.println("JaCoMo bot");
         Logger logger = null;
         try {
             logger = new Logger();
@@ -43,6 +51,21 @@ public class BotApplication {
         logger.logout();
     }
 
+    static void runStats() {
+        initProperties();
+
+        System.out.println("JaCoMo stats");
+        PresenceManager presenceManager = null;
+        try {
+            presenceManager = new PresenceManager();
+        } catch (JacomoException ex) {
+            System.err.println("Can't create PresenceManager: " + ex.getMessage());
+            return;
+        }
+        presenceManager.initialize();
+        presenceManager.show();
+    }
+
     static void initProperties() {
         //// possibly load properties from a file:
         // Properties p = new Properties(System.getProperties());
@@ -51,8 +74,10 @@ public class BotApplication {
         // System.setProperties(p);
 
         System.setProperty("jacomo.bot.jabberServer", "jabber.cz");
-        System.setProperty("jacomo.bot.jabberUser", "jacomobot");
-        System.setProperty("jacomo.bot.jabberPassword", "comchabo");
+        //System.setProperty("jacomo.bot.jabberUser", "jacomobot");
+        //System.setProperty("jacomo.bot.jabberPassword", "comchabo");
+        System.setProperty("jacomo.bot.jabberUser", "bohous");
+        System.setProperty("jacomo.bot.jabberPassword", "elensila");
 
         System.setProperty("jacomo.homeDir",
                 System.getProperty("user.home", ".") + "/.jacomo");

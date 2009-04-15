@@ -70,15 +70,7 @@ public class Logger {
             }
 
             public void presenceChanged(Presence presence) {
-                Date date = Calendar.getInstance().getTime();
-                String jid = stripJID(presence.getFrom());
-                if ((jid != null) && contactFilter.filter(jid)) {
-                    PresenceStatus status = PresenceStatus.fromJabberPresence(presence);
-                    String statusDesctiption = presence.getStatus();
-                    System.out.println("status changed: " + jid + " at " +
-                            date + ": " + status + " (" + statusDesctiption + ")");
-                    changeContactPresence(jid, date, status, statusDesctiption);
-                }
+                changeContactPresence(presence);
             }
         };
     }
@@ -92,6 +84,15 @@ public class Logger {
             registerJabberHandlers();
             state = LoggerState.RUNNING;
         }
+        // log contacts being currently online
+        Roster roster = jabberConnection.getRoster();
+        for (RosterEntry entry : roster.getEntries()) {
+            String jid = stripJID(entry.getUser());
+            Presence presence = roster.getPresence(jid);
+            if (presence.isAvailable()) {
+                changeContactPresence(presence);
+            }
+        }
         // write ONLINE to own presence log
         dbBackend.changeBotPresence(true);
     }
@@ -104,6 +105,17 @@ public class Logger {
         if (state == LoggerState.RUNNING) {
             unregisterJabberHandlers();
             state = LoggerState.PREPARED;
+        }
+        // log contacts being currently online as they would have disconnected
+        Roster roster = jabberConnection.getRoster();
+        for (RosterEntry entry : roster.getEntries()) {
+            String jid = stripJID(entry.getUser());
+            Presence presence = roster.getPresence(jid);
+            if (presence.isAvailable()) {
+                // treat it as offline
+                presence.setType(Presence.Type.unavailable);
+                changeContactPresence(presence);
+            }
         }
         // write OFFLINE to own presence log
         dbBackend.changeBotPresence(false);
@@ -217,6 +229,18 @@ public class Logger {
             enableContact(contact);
         }
         dbBackend.changeContactPresence(contact, date, status, statusDesctiption);
+    }
+
+    void changeContactPresence(Presence presence) {
+        Date date = Calendar.getInstance().getTime();
+        String jid = stripJID(presence.getFrom());
+        if ((jid != null) && contactFilter.filter(jid)) {
+            PresenceStatus status = PresenceStatus.fromJabberPresence(presence);
+            String statusDesctiption = presence.getStatus();
+            System.out.println("status changed: " + jid + " at " +
+                    date + ": " + status + " (" + statusDesctiption + ")");
+            changeContactPresence(jid, date, status, statusDesctiption);
+        }
     }
 
     /**

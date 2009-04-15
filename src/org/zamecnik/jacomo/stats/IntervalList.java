@@ -1,11 +1,14 @@
 package org.zamecnik.jacomo.stats;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import org.zamecnik.jacomo.lib.PresenceStatus;
+
+import java.util.Calendar;
 
 /**
  *
@@ -59,6 +62,7 @@ public class IntervalList {
         }
     }
 
+    // Note: both lists must be sorted boforehand
     public static IntervalList intersect(IntervalList lhs, IntervalList rhs) {
         // based on X-transition list from RNDr. Pelikan's 16-imagecoding.pdf
         boolean state, newstate, inStateRhs, inStateLhs;
@@ -71,7 +75,7 @@ public class IntervalList {
             if (iterLhs.hasNext() && iterRhs.hasNext()) {
                 currentLhsPoint = iterLhs.next();
                 currentRhsPoint = iterRhs.next();
-                if (currentLhsPoint.compareTo(currentRhsPoint) > 0) {
+                if (currentLhsPoint.compareTo(currentRhsPoint) < 0) {
                     currentPoint = currentLhsPoint;
                     iterRhs.previous();
                     inStateLhs = !inStateLhs;
@@ -104,5 +108,40 @@ public class IntervalList {
 
     public void intersect(IntervalList other) {
         this.timePoints = IntervalList.intersect(this, other).timePoints;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Date date : timePoints) {
+            sb.append(DateFormat.getDateTimeInstance().format(date) + ", ");
+        }
+        return sb.toString();
+    }
+
+    public static void testIntersect() {
+        IntervalList list1 = new IntervalList();
+        IntervalList list2 = new IntervalList();
+        Calendar cal = Calendar.getInstance();
+        cal.set(2009, 04, 15, 22, 30, 00);
+        list1.add(cal.getTime());
+        cal.add(Calendar.MINUTE, 5);
+        list1.add(cal.getTime());
+        cal.add(Calendar.MINUTE, 3);
+        list1.add(cal.getTime());
+        cal.add(Calendar.MINUTE, 2);
+        list1.add(cal.getTime());
+        cal.add(Calendar.MINUTE, 7);
+        list1.add(cal.getTime());
+
+        cal.set(Calendar.MINUTE, 30);
+        list2.add(cal.getTime());
+        cal.add(Calendar.MINUTE, 9);
+        list2.add(cal.getTime());
+
+        System.out.println("list1: " + list1);
+        System.out.println("list2: " + list2);
+        IntervalList listIntersect = intersect(list2, list1);
+        System.out.println("list intersection: " + listIntersect);
     }
 }

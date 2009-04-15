@@ -1,6 +1,6 @@
 package org.zamecnik.jacomo.lib;
 
-import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -245,7 +245,8 @@ public class JavaDBBackend implements DBBackend {
     public void changeBotPresence(boolean online) {
         Date date = Calendar.getInstance().getTime();
         System.out.println("change in bot presence: " +
-                (online ? "ONLINE" : "OFFLINE") + ", " + date.getTime());
+                (online ? "ONLINE" : "OFFLINE") + ", "
+                + DateFormat.getDateTimeInstance().format(date));
         try {
             stmtInsertBotPresenceChange.clearParameters();
             stmtInsertBotPresenceChange.setTimestamp(1, new Timestamp(date.getTime()));
@@ -276,7 +277,7 @@ public class JavaDBBackend implements DBBackend {
             stmtSelectContacts.clearParameters();
             stmtSelectContacts.setString(1, "N"); // not archived
             ResultSet rs = stmtSelectContacts.executeQuery();
-            if (rs.next()) {
+            while (rs.next()) {
                 contacts.add(new Contact(
                         rs.getString(2), // jid
                         rs.getString(3), // name
@@ -296,11 +297,11 @@ public class JavaDBBackend implements DBBackend {
         List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
         try {
             stmtSelectBotPresenceChanges.clearParameters(); // ?
-            ResultSet rs = stmtSelectContacts.executeQuery();
-            if (rs.next()) {
+            ResultSet rs = stmtSelectBotPresenceChanges.executeQuery();
+            while (rs.next()) {
                 presenceChanges.add(new PresenceChange(
-                    rs.getDate(1), // time
-                    PresenceStatus.fromBoolean(rs.getBoolean(2)) // status
+                    new Date(rs.getTimestamp(1).getTime()), // time
+                    PresenceStatus.fromBoolean(rs.getString(2).equals("Y")) // status
                     ));
             }
         } catch (SQLException ex) {
@@ -318,9 +319,9 @@ public class JavaDBBackend implements DBBackend {
         try {
             stmtSelectContactsPresenceChanges.clearParameters(); // ?
             ResultSet rs = stmtSelectContactsPresenceChanges.executeQuery();
-            if (rs.next()) {
+            while (rs.next()) {
                 presenceChanges.add(new PresenceChange(
-                    rs.getDate(2), // time
+                    new Date(rs.getTimestamp(2).getTime()), // time
                     PresenceStatus.fromString(rs.getString(4)), // status
                     rs.getInt(1), // contact id
                     rs.getString(3) // status description
@@ -340,10 +341,11 @@ public class JavaDBBackend implements DBBackend {
         List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
         try {
             stmtSelectContactsPresenceChangesById.clearParameters(); // ?
+            stmtSelectContactsPresenceChangesById.setInt(1, contactId);
             ResultSet rs = stmtSelectContactsPresenceChangesById.executeQuery();
-            if (rs.next()) {
+            while (rs.next()) {
                 presenceChanges.add(new PresenceChange(
-                    rs.getDate(2), // time
+                    new Date(rs.getTimestamp(2).getTime()), // time
                     PresenceStatus.fromString(rs.getString(4)), // status
                     rs.getInt(1), // contact id
                     rs.getString(3) // status description

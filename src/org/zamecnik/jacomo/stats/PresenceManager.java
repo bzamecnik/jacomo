@@ -1,6 +1,7 @@
 package org.zamecnik.jacomo.stats;
 
 import org.zamecnik.jacomo.lib.*;
+import java.text.DateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,5 +67,27 @@ public class PresenceManager {
         }
 
         // - register in bot for update notification
+    }
+
+    // DEBUG
+    public void show() {
+        System.out.println("Presence Manager");
+        System.out.println("Bot presence intervals");
+        System.out.println(botPresenceIntervals.toString());
+        System.out.println();
+
+        System.out.println("Contacts (size: " + contacts.size() + "):");
+        for (Map.Entry<Integer, Contact> entry : contacts.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+
+        }
+        System.out.println();
+
+        System.out.println("Contact presence intervals:");
+        for (Map.Entry<Integer, IntervalList> entry : contactIntervals.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+
+        }
+        System.out.println();
     }
 }
