@@ -21,21 +21,23 @@ import java.sql.Timestamp;
 public class JavaDBBackend implements DBBackend {
 
     public JavaDBBackend() throws JacomoException {
-        loadDriver();
-
         String dbName = System.getProperty("jacomo.dbName");
         String strUrl = "jdbc:derby:" + dbName + ";create=true";
         String homeDir = System.getProperty("jacomo.homeDir", ".");
         System.out.println("home directory:" + homeDir);
 
-        // create the home directory if it doesn't exist
-        File homeDirFile = new File(homeDir);
-        homeDirFile.mkdirs();
-        // TODO:
+        // Create the home directory if it doesn't exist
+        // Note: Derby will create that directory automatically
+        //File homeDirFile = new File(homeDir);
+        //homeDirFile.mkdirs();
+        
+        // Note: derby.system.home property must be set BEFORE loading the
+        // JavaDB (Derby) driver
         System.setProperty("derby.system.home", homeDir);
 
+        loadDriver();
+        
         dbConnection = null;
-
         try {
             // make a connection
             dbConnection = DriverManager.getConnection(strUrl);
@@ -69,6 +71,11 @@ public class JavaDBBackend implements DBBackend {
             stmtSelectContactsPresenceChanges = dbConnection.prepareStatement(
                     "SELECT contactId, time, online, status, statusDesc " +
                     "    FROM ContactPresenceLog ORDER BY contactId, time");
+
+            stmtSelectContactsPresenceChangesById = dbConnection.prepareStatement(
+                    "SELECT contactId, time, online, status, statusDesc " +
+                    "    FROM ContactPresenceLog WHERE contactId = ? " +
+                    "    ORDER BY contactId, time");
 
             stmtUpdateContactArchived = dbConnection.prepareStatement(
                     "UPDATE Contacts SET archived = ? WHERE id = ?");
@@ -330,7 +337,22 @@ public class JavaDBBackend implements DBBackend {
      * @return
      */
     public List<PresenceChange> getContactPresenceChangesList(int contactId) {
-        return new ArrayList<PresenceChange>(); // TODO
+        List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
+        try {
+            stmtSelectContactsPresenceChangesById.clearParameters(); // ?
+            ResultSet rs = stmtSelectContactsPresenceChangesById.executeQuery();
+            if (rs.next()) {
+                presenceChanges.add(new PresenceChange(
+                    rs.getDate(2), // time
+                    PresenceStatus.fromString(rs.getString(4)), // status
+                    rs.getInt(1), // contact id
+                    rs.getString(3) // status description
+                    ));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return presenceChanges;
     }
 
     int getContactId(String contact) {
@@ -355,6 +377,7 @@ public class JavaDBBackend implements DBBackend {
     PreparedStatement stmtSelectContactByJid;
     PreparedStatement stmtSelectBotPresenceChanges;
     PreparedStatement stmtSelectContactsPresenceChanges;
+    PreparedStatement stmtSelectContactsPresenceChangesById;
     PreparedStatement stmtUpdateContactArchived;
     PreparedStatement stmtUpdateContactName;
 }

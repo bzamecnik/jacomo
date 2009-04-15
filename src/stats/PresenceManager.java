@@ -25,17 +25,17 @@ public class PresenceManager {
 
     public void initialize() {
         // - load contact bot presence changes
-        List<PresenceChange> botPresenceList = dbBackend.getBotPresenceChangesList();
+        List<PresenceChange> presenceList = dbBackend.getBotPresenceChangesList();
 
         //   - interpret them as time intervals
-        boolean botOnlineCurrentStatus = false;
-        boolean botOnlinePreviousStatus = false;
-        for (PresenceChange change : botPresenceList) {
-            botOnlineCurrentStatus = change.getStatus().isOnline(change.getStatus());
-            if (botOnlineCurrentStatus != botOnlinePreviousStatus) {
+        boolean onlineCurrentStatus = false;
+        boolean onlinePreviousStatus = false;
+        for (PresenceChange change : presenceList) {
+            onlineCurrentStatus = change.getStatus().isOnline(change.getStatus());
+            if (onlineCurrentStatus != onlinePreviousStatus) {
                 botPresenceIntervals.add(change.getTime());
             }
-            botOnlinePreviousStatus = botOnlineCurrentStatus;
+            onlinePreviousStatus = onlineCurrentStatus;
         }
 
         // - load contacts
@@ -46,6 +46,24 @@ public class PresenceManager {
 
         // - load contact presence changes
         //   - interpret them as time intervals (intersected by bot presence)
+        
+        // TODO: possible optimization:
+        //   - get changes in one SQL query using getPresenceChangesList()
+        //   - separate change sets for each contact here
+        for (int contactId : contacts.keySet()) {
+            presenceList = dbBackend.getContactPresenceChangesList(contactId);
+            onlinePreviousStatus = false;
+            IntervalList currentIntervalList = new IntervalList();
+            for (PresenceChange change : presenceList) {
+                onlineCurrentStatus = change.getStatus().isOnline(change.getStatus());
+                if (onlineCurrentStatus != onlinePreviousStatus) {
+                    currentIntervalList.add(change.getTime());
+                }
+                onlinePreviousStatus = onlineCurrentStatus;
+            }
+            contactIntervals.put(contactId,
+                IntervalList.intersect(currentIntervalList, botPresenceIntervals));
+        }
 
         // - register in bot for update notification
     }
