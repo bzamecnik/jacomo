@@ -1,7 +1,7 @@
 package org.zamecnik.jacomo.stats;
 
 import org.zamecnik.jacomo.lib.*;
-import java.text.DateFormat;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +67,20 @@ public class PresenceManager {
         }
 
         // - register in bot for update notification
+    }
+
+    public Map getContacts() {
+        return Collections.unmodifiableMap(contacts);
+    }
+
+    public IntervalList getBotPresenceIntervals() {
+        // TODO: this should give read-only access
+        return botPresenceIntervals;
+    }
+
+    public IntervalList getContactPresenceIntervals(int contactId) {
+        // TODO: this should give read-only access
+        return contactIntervals.get(contactId);
     }
 
     // DEBUG

@@ -62,6 +62,10 @@ public class IntervalList {
         }
     }
 
+    public List<Date> getTimePointsList() {
+        return Collections.unmodifiableList(timePoints);
+    }
+
     // Note: both lists must be sorted boforehand
     public static IntervalList intersect(IntervalList lhs, IntervalList rhs) {
         // based on X-transition list from RNDr. Pelikan's 16-imagecoding.pdf

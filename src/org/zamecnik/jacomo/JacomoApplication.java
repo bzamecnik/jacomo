@@ -2,7 +2,11 @@ package org.zamecnik.jacomo;
 
 import org.zamecnik.jacomo.bot.*;
 import org.zamecnik.jacomo.stats.*;
+import org.zamecnik.jacomo.stats.interpret.*;
 import org.zamecnik.jacomo.lib.JacomoException;
+
+import java.util.Calendar;
+import java.text.DateFormat;
 
 /**
  *
@@ -11,6 +15,18 @@ import org.zamecnik.jacomo.lib.JacomoException;
 public class JacomoApplication {
 
     public static void main(String[] args) {
+//        Calendar cal = Calendar.getInstance();
+//        //System.out.println("now:" + DateFormat.getDateTimeInstance().format(cal.getTime()));
+//        System.out.println("now:" + cal.getTime().getTime());
+//        //cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+//        cal.set(Calendar.AM_PM, 0);
+//        cal.set(Calendar.HOUR, 0);
+//        cal.set(Calendar.MINUTE, 0);
+//        cal.set(Calendar.SECOND, 0);
+//        cal.set(Calendar.MILLISECOND, 0);
+//        System.out.println("start of week:" + DateFormat.getDateTimeInstance().format(cal.getTime()));
+//        System.out.println("start of week:" + cal.getTime().getTime());
+
         // TODO: run either Bot deamon or Stats GUI based on arguments
         if (args.length > 0) {
             if (args[0].equals("-bot")) {
@@ -63,7 +79,17 @@ public class JacomoApplication {
             return;
         }
         presenceManager.initialize();
-        presenceManager.show();
+        //presenceManager.show();
+
+        //Interpreter contactsCount = new ContactsCount(presenceManager);
+        //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
+        //System.out.println("ContactsCount: " + result.getContactsCount());
+
+        Interpreter histogram = Histogram.hourHistogram;
+        ((Histogram)histogram).setIntervals(presenceManager.getBotPresenceIntervals());
+        //((Histogram)histogram).setIntervals(presenceManager.getContactPresenceIntervals(71));
+        Histogram.Result result = (Histogram.Result)histogram.interpret();
+        System.out.println("ContactsCount: " + result.toString());
     }
 
     static void initProperties() {
