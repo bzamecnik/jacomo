@@ -28,5 +28,4 @@ public class ContactsCount extends Interpreter {
         int contactsCount;
     }
 
-    PresenceManager presenceManager;
 }

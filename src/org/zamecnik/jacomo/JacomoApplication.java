@@ -32,7 +32,9 @@ public class JacomoApplication {
             if (args[0].equals("-bot")) {
                 runBot();
             } else if (args[0].equals("-stats")) {
-                runStats();
+                //runStats();
+                System.out.println("gui main");
+                org.zamecnik.jacomo.stats.Gui.main(args);
             }
         }
     }
