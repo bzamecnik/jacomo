@@ -32,9 +32,8 @@ public class JacomoApplication {
             if (args[0].equals("-bot")) {
                 runBot();
             } else if (args[0].equals("-stats")) {
-                //runStats();
-                System.out.println("gui main");
-                org.zamecnik.jacomo.stats.Gui.main(args);
+                runStats();
+                //org.zamecnik.jacomo.stats.Gui.main(args);
             }
         }
     }
@@ -87,11 +86,11 @@ public class JacomoApplication {
         //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
         //System.out.println("ContactsCount: " + result.getContactsCount());
 
-        Interpreter histogram = Histogram.hourHistogram;
-        ((Histogram)histogram).setIntervals(presenceManager.getBotPresenceIntervals());
+        Histogram histogram = Histogram.hourHistogram;
+        histogram.setIntervalLists(presenceManager.getAllPresenceIntervals());
         //((Histogram)histogram).setIntervals(presenceManager.getContactPresenceIntervals(71));
         Histogram.Result result = (Histogram.Result)histogram.interpret();
-        System.out.println("ContactsCount: " + result.toString());
+        System.out.println("histogram: " + result.toString());
     }
 
     static void initProperties() {

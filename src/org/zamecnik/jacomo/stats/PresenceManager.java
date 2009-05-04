@@ -1,5 +1,6 @@
 package org.zamecnik.jacomo.stats;
 
+import java.util.Collection;
 import org.zamecnik.jacomo.lib.*;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,6 +82,11 @@ public class PresenceManager {
     public IntervalList getContactPresenceIntervals(int contactId) {
         // TODO: this should give read-only access
         return contactIntervals.get(contactId);
+    }
+
+    public Collection<IntervalList> getAllPresenceIntervals() {
+        // give read-only access
+        return Collections.unmodifiableCollection(contactIntervals.values());
     }
 
     // DEBUG

@@ -2,9 +2,7 @@ package org.zamecnik.jacomo.stats.interpret;
 
 import org.zamecnik.jacomo.stats.*;
 import java.util.Calendar;
-import java.util.Iterator;
-import java.util.Date;
-import java.util.List;
+import java.util.Collection;
 
 /**
  *
@@ -12,96 +10,59 @@ import java.util.List;
  */
 public class Histogram extends Interpreter {
 
-    public Histogram(int histogramSize, long sampleSize,
-            StartSampleDateFunc startSampleDateFunc) {
+    public Histogram(int histogramSize, Quantizer quantizer) {
             this.histogramSize = histogramSize;
-            this.sampleSize = sampleSize;
-            this.startSampleDateFunc = startSampleDateFunc;
+            this.quantizer = quantizer;
     }
 
     static {
         hourHistogram = new Histogram(
             24,
-            3600000, // 1 hour in milliseconds
-            new StartSampleDateFunc() {
-                public Calendar computeStartSampleDate(Calendar firstDate) {
-                    firstDate.set(Calendar.AM_PM, Calendar.AM);
-                    firstDate.set(Calendar.HOUR, 0);
-                    firstDate.set(Calendar.MINUTE, 0);
-                    firstDate.set(Calendar.SECOND, 0);
-                    firstDate.set(Calendar.MILLISECOND, 0);
-                    return firstDate;
+            new Quantizer(
+                3600000, // 1 hour in milliseconds
+                new Quantizer.StartSampleDateFunc() {
+                    public Calendar computeStartSampleDate(Calendar firstDate) {
+                        firstDate.set(Calendar.AM_PM, Calendar.AM);
+                        firstDate.set(Calendar.HOUR, 0);
+                        firstDate.set(Calendar.MINUTE, 0);
+                        firstDate.set(Calendar.SECOND, 0);
+                        firstDate.set(Calendar.MILLISECOND, 0);
+                        return firstDate;
+                    }
                 }
-                }
+            )
         );
         weekdayHistogram = new Histogram(
             7,
-            86400000, // 1 day in milliseconds
-            new StartSampleDateFunc() {
-                public Calendar computeStartSampleDate(Calendar firstDate) {
-                    firstDate.set(Calendar.DAY_OF_WEEK,
-                            firstDate.getFirstDayOfWeek());
-                    firstDate.set(Calendar.AM_PM, Calendar.AM);
-                    firstDate.set(Calendar.HOUR, 0);
-                    firstDate.set(Calendar.MINUTE, 0);
-                    firstDate.set(Calendar.SECOND, 0);
-                    firstDate.set(Calendar.MILLISECOND, 0);
-                    return firstDate;
+            new Quantizer(
+                86400000, // 1 day in milliseconds
+                new Quantizer.StartSampleDateFunc() {
+                    public Calendar computeStartSampleDate(Calendar firstDate) {
+                        firstDate.set(Calendar.DAY_OF_WEEK,
+                                firstDate.getFirstDayOfWeek());
+                        firstDate.set(Calendar.AM_PM, Calendar.AM);
+                        firstDate.set(Calendar.HOUR, 0);
+                        firstDate.set(Calendar.MINUTE, 0);
+                        firstDate.set(Calendar.SECOND, 0);
+                        firstDate.set(Calendar.MILLISECOND, 0);
+                        return firstDate;
+                    }
                 }
-            }
+            )
         );
     }
 
     @Override
     public Interpreter.Result interpret() {
-        int[] histogram = new int[getHistogramSize()];
-        List<Date> timePoints = intervals.getTimePointsList();
-        if (timePoints.isEmpty()) {
-            return new Result(histogram);
-        }
+        int[] histogram = new int[histogramSize];
 
-        Calendar cal = Calendar.getInstance();
-        Date endPoint = cal.getTime();
-        long startPoint = roundTimePoint(computeStartSampleDate(
-                timePoints.get(0)).getTime(), false);
-
-        // add end point to close the interval if the last interval is open
-        if ((timePoints.size() % 2) != 0) {
-            timePoints.add(endPoint);
-        }
-        
-        Iterator<Date> timePointIter = timePoints.iterator();
-
-        long intervalStartPoint;
-        long intervalEndPoint;
-        while (timePointIter.hasNext()) {
-            intervalStartPoint = roundTimePoint(timePointIter.next().getTime(), false)
-                    - startPoint;
-            intervalEndPoint = roundTimePoint(timePointIter.next().getTime(), true)
-                    - startPoint;
-            for (long sample = intervalStartPoint;
-                sample < intervalEndPoint; sample++)
-            {
-                histogram[(int)(sample % histogramSize)]++;
-            }
+        quantizer.setIntervalLists(intervalLists);
+        Quantizer.Result quantizerResult = (Quantizer.Result) quantizer.interpret();
+        int[] sums = quantizerResult.getSums();
+        for (int i = 0; i < sums.length; i++) {
+            histogram[i % histogramSize]++;
         }
         return new Result(histogram);
-    }
-
-    long roundTimePoint(long seconds, boolean ceiling) {
-        double tmp = (double) seconds / getSampleSize();
-        return (long) (ceiling ? Math.ceil(tmp) : Math.floor(tmp));
-    }
-
-    Date computeStartSampleDate(Date firstDate) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(firstDate);
-        cal = startSampleDateFunc.computeStartSampleDate(cal);
-        return cal.getTime();
-    }
-
-    public void setIntervals(IntervalList intervals) {
-        this.intervals = intervals;
     }
 
     /**
@@ -119,17 +80,10 @@ public class Histogram extends Interpreter {
     }
 
     /**
-     * @return the sampleSize
+     * @param intervalLists the intervalLists to set
      */
-    public long getSampleSize() {
-        return sampleSize;
-    }
-
-    /**
-     * @param sampleSize the sampleSize to set
-     */
-    public void setSampleSize(long sampleSize) {
-        this.sampleSize = sampleSize;
+    public void setIntervalLists(Collection<IntervalList> intervalLists) {
+        this.intervalLists = intervalLists;
     }
 
     public class Result extends Interpreter.Result {
@@ -152,14 +106,9 @@ public class Histogram extends Interpreter {
         int[] histogram;
     }
 
-    public interface StartSampleDateFunc {
-        public Calendar computeStartSampleDate(Calendar firstDate);
-    }
-
-    IntervalList intervals;
     int histogramSize;
-    long sampleSize;
-    StartSampleDateFunc startSampleDateFunc;
+    Quantizer quantizer;
+    private Collection<IntervalList> intervalLists;
 
     public static final Histogram hourHistogram;
     public static final Histogram weekdayHistogram;
