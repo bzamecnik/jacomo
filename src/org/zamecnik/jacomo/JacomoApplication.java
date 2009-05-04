@@ -1,5 +1,7 @@
 package org.zamecnik.jacomo;
 
+import org.zamecnik.jacomo.stats.Quantizer;
+import org.zamecnik.jacomo.stats.Histogram;
 import org.zamecnik.jacomo.bot.*;
 import org.zamecnik.jacomo.stats.*;
 import org.zamecnik.jacomo.stats.interpret.*;
@@ -86,11 +88,12 @@ public class JacomoApplication {
         //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
         //System.out.println("ContactsCount: " + result.getContactsCount());
 
-        Histogram histogram = Histogram.hourHistogram;
-        histogram.setIntervalLists(presenceManager.getAllPresenceIntervals());
-        //((Histogram)histogram).setIntervals(presenceManager.getContactPresenceIntervals(71));
-        Histogram.Result result = (Histogram.Result)histogram.interpret();
-        System.out.println("histogram: " + result.toString());
+        Histogram hourHistogram = Histogram.hourHistogram;
+        Quantizer hourQuantizer = Quantizer.hourQuantizer;
+        int[] quantizationSums = hourQuantizer.quantizeAndSum(
+                presenceManager.getAllPresenceIntervals());
+        int[] histogramResult = hourHistogram.computeHistogram(quantizationSums);
+        System.out.println("histogram: " + histogramResult.toString());
     }
 
     static void initProperties() {

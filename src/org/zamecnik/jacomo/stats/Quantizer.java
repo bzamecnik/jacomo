@@ -1,4 +1,4 @@
-package org.zamecnik.jacomo.stats.interpret;
+package org.zamecnik.jacomo.stats;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,18 +12,45 @@ import org.zamecnik.jacomo.stats.IntervalList;
  *
  * @author Bohouš
  */
-public class Quantizer extends Interpreter {
+public class Quantizer {
+
     public Quantizer(
             long sampleSize,
-            StartSampleDateFunc startSampleDateFunc
-            )
-    {
+            StartSampleDateFunc startSampleDateFunc) {
         this.sampleSize = sampleSize;
         this.startSampleDateFunc = startSampleDateFunc;
     }
 
-    public Interpreter.Result interpret() {
-        return new Result(quantizeAndSum(intervalLists));
+
+    static {
+        hourQuantizer = new Quantizer(
+                3600000, // 1 hour in milliseconds
+                new Quantizer.StartSampleDateFunc() {
+
+            public Calendar computeStartSampleDate(Calendar firstDate) {
+                firstDate.set(Calendar.AM_PM, Calendar.AM);
+                firstDate.set(Calendar.HOUR, 0);
+                firstDate.set(Calendar.MINUTE, 0);
+                firstDate.set(Calendar.SECOND, 0);
+                firstDate.set(Calendar.MILLISECOND, 0);
+                return firstDate;
+            }
+        });
+        weekdayQuantizer = new Quantizer(
+                86400000, // 1 day in milliseconds
+                new Quantizer.StartSampleDateFunc() {
+
+            public Calendar computeStartSampleDate(Calendar firstDate) {
+                firstDate.set(Calendar.DAY_OF_WEEK,
+                        firstDate.getFirstDayOfWeek());
+                firstDate.set(Calendar.AM_PM, Calendar.AM);
+                firstDate.set(Calendar.HOUR, 0);
+                firstDate.set(Calendar.MINUTE, 0);
+                firstDate.set(Calendar.SECOND, 0);
+                firstDate.set(Calendar.MILLISECOND, 0);
+                return firstDate;
+            }
+        });
     }
 
 //    public boolean[][] quantize(Collection<IntervalList> intervalLists) {
@@ -35,13 +62,12 @@ public class Quantizer extends Interpreter {
 //        //   - for each interval list:
 //        //     - store sample status
 //    }
-
     public int[] sum(boolean[][] quantized) {
         int[] summed = new int[quantized.length];
-        for(int sample = 0; sample < quantized.length; sample++) {
+        for (int sample = 0; sample < quantized.length; sample++) {
             boolean[] sampleValues = quantized[sample]; // a possible optimization
             summed[sample] = 0;
-            for(int user = 0; user < quantized.length; user++) {
+            for (int user = 0; user < quantized.length; user++) {
                 if (sampleValues[user]) {
                     summed[sample]++;
                 }
@@ -78,8 +104,7 @@ public class Quantizer extends Interpreter {
                 computeStartSampleDate(lastDate).getTime(), true);
 
         // compute number of samples
-        int nSamples = (int) ((lastPoint - firstPoint)
-                / sampleSize);
+        int nSamples = (int) ((lastPoint - firstPoint) / sampleSize);
         int[] summedSamples = new int[nSamples];
         // TODO: initialize summedSamples to 0 (is it automatic?)
 
@@ -95,10 +120,8 @@ public class Quantizer extends Interpreter {
             while (iter.hasNext()) {
                 startPoint = roundTimePoint(iter.next().getTime(), false) - firstPoint;
                 endPoint = roundTimePoint(iter.next().getTime(), true) - firstPoint;
-                for (long sample = startPoint; sample < endPoint; sample++)
-                {
-                    summedSamples[(int)sample]++;
-                    //histogram[(int)(sample % histogramSize)]++;
+                for (long sample = startPoint; sample < endPoint; sample++) {
+                    summedSamples[(int) sample]++;
                 }
             }
         }
@@ -110,7 +133,7 @@ public class Quantizer extends Interpreter {
         Calendar cal = Calendar.getInstance();
         Date endPoint = cal.getTime();
 
-        // - get list of time points from each interval list
+        // - get a list of time points from each interval list
         List<List<Date>> points = new ArrayList<List<Date>>();
         for (IntervalList intervalList : intervalLists) {
             List<Date> currentPoints = intervalList.getTimePointsList();
@@ -136,30 +159,12 @@ public class Quantizer extends Interpreter {
         return cal.getTime();
     }
 
-    /**
-     * @param intervalLists the intervalLists to set
-     */
-    public void setIntervalLists(Collection<IntervalList> intervalLists) {
-        this.intervalLists = intervalLists;
-    }
-
     public interface StartSampleDateFunc {
+
         public Calendar computeStartSampleDate(Calendar firstDate);
     }
-
-    public class Result extends Interpreter.Result {
-        public Result(int[] sums) {
-            this.sums = sums;
-        }
-
-        public int[] getSums() {
-            return sums;
-        }
-
-        int[] sums;
-    }
-
     long sampleSize;
     StartSampleDateFunc startSampleDateFunc;
-    private Collection<IntervalList> intervalLists;
+    public static final Quantizer hourQuantizer;
+    public static final Quantizer weekdayQuantizer;
 }
