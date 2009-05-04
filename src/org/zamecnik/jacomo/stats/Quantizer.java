@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import org.zamecnik.jacomo.stats.IntervalList;
 
 /**
  *
@@ -86,8 +85,8 @@ public class Quantizer {
 
     int[] quantizeAndSum(List<List<Date>> points) {
         // find out minimum and maximum points of all interval lists
-        Date firstDate = points.get(0).get(0);
-        Date lastDate = firstDate;
+        Date firstDate = new Date();
+        Date lastDate = new Date(0);
         for (List<Date> pointsList : points) {
             for (Date point : pointsList) {
                 if (point.before(firstDate)) {
@@ -100,12 +99,12 @@ public class Quantizer {
         }
         long firstPoint = roundTimePoint(
                 computeStartSampleDate(firstDate).getTime(), false);
-        long lastPoint = roundTimePoint(
-                computeStartSampleDate(lastDate).getTime(), true);
+        long lastPoint = roundTimePoint(lastDate.getTime(), true);
 
         // compute number of samples
-        int nSamples = (int) ((lastPoint - firstPoint) / sampleSize);
+        int nSamples = (int) ((lastPoint - firstPoint));
         int[] summedSamples = new int[nSamples];
+        
         // TODO: initialize summedSamples to 0 (is it automatic?)
 
         // - for each list of points:
@@ -133,11 +132,11 @@ public class Quantizer {
         Calendar cal = Calendar.getInstance();
         Date endPoint = cal.getTime();
 
-        // - get a list of time points from each interval list
+        // get a list of time points from each interval list
         List<List<Date>> points = new ArrayList<List<Date>>();
         for (IntervalList intervalList : intervalLists) {
             List<Date> currentPoints = intervalList.getTimePointsList();
-            // - correct end points to close the open intervals at 'now' time
+            // correct end points to close the open intervals at 'now' time
             // add end point to close the interval if the last interval is open
             if ((currentPoints.size() % 2) != 0) {
                 currentPoints.add(endPoint);

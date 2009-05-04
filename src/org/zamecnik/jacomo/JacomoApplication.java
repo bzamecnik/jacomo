@@ -1,14 +1,9 @@
 package org.zamecnik.jacomo;
 
-import org.zamecnik.jacomo.stats.Quantizer;
-import org.zamecnik.jacomo.stats.Histogram;
+import java.util.Collection;
 import org.zamecnik.jacomo.bot.*;
 import org.zamecnik.jacomo.stats.*;
-import org.zamecnik.jacomo.stats.interpret.*;
 import org.zamecnik.jacomo.lib.JacomoException;
-
-import java.util.Calendar;
-import java.text.DateFormat;
 
 /**
  *
@@ -88,12 +83,26 @@ public class JacomoApplication {
         //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
         //System.out.println("ContactsCount: " + result.getContactsCount());
 
-        Histogram hourHistogram = Histogram.hourHistogram;
-        Quantizer hourQuantizer = Quantizer.hourQuantizer;
-        int[] quantizationSums = hourQuantizer.quantizeAndSum(
-                presenceManager.getAllPresenceIntervals());
-        int[] histogramResult = hourHistogram.computeHistogram(quantizationSums);
-        System.out.println("histogram: " + histogramResult.toString());
+        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
+
+        Histogram histogram = Histogram.hourHistogram;
+        Quantizer quantizer = Quantizer.hourQuantizer;
+//        Histogram histogram = Histogram.weekdayHistogram;
+//        Quantizer quantizer = Quantizer.weekdayQuantizer;
+
+        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
+        System.out.println("quantization sums:");
+        for (int i = 0; i < quantizationSums.length; i++) {
+            System.out.print(quantizationSums[i] + ", ");
+        }
+        System.out.println();
+
+        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
+        System.out.println("histogram:");
+        for (int i = 0; i < scaledHistogramResult.length; i++) {
+            System.out.print(scaledHistogramResult[i] + ", ");
+        }
+        System.out.println();
     }
 
     static void initProperties() {
@@ -104,8 +113,8 @@ public class JacomoApplication {
         // System.setProperties(p);
 
         System.setProperty("jacomo.bot.jabberServer", "jabber.cz");
-        //System.setProperty("jacomo.bot.jabberUser", "jacomobot");
-        //System.setProperty("jacomo.bot.jabberPassword", "comchabo");
+//        System.setProperty("jacomo.bot.jabberUser", "jacomobot");
+//        System.setProperty("jacomo.bot.jabberPassword", "comchabo");
         System.setProperty("jacomo.bot.jabberUser", "bohous");
         System.setProperty("jacomo.bot.jabberPassword", "elensila");
 
