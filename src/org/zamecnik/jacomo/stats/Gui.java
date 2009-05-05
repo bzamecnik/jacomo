@@ -1,9 +1,13 @@
 package org.zamecnik.jacomo.stats;
 
-import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingWorker;
 
 /**
  *
@@ -11,29 +15,73 @@ import javax.swing.JLabel;
  */
 public class Gui {
 
-    private static void createAndShowGUI() {
-        //JFrame.setDefaultLookAndFeelDecorated(true);
-        JFrame frame = new JFrame("JaCoMo - stats");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        Container pane = frame.getContentPane();
-        pane.setLayout(new BorderLayout());
-        //pane.setLayout(new GridLayout(3, 0));
-
-        pane.add(new JLabel("count"), BorderLayout.PAGE_START);
-        pane.add(new HistogramPanel(), BorderLayout.CENTER);
-        pane.add(new JLabel("intervals"), BorderLayout.PAGE_END);
-
-        frame.pack();
-        frame.setVisible(true);
+    public Gui(StatsApp statsApp) {
+        this.statsApp = statsApp;
     }
 
-    public static void main(String[] args) {
+    private void createAndShowGUI() {
+        //JFrame.setDefaultLookAndFeelDecorated(true);
+        frame = new JFrame("JaCoMo - stats");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JPanel mainPanel = new JPanel();
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
+
+        mainPanel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        mainPanel.add(new JLabel("count"), c);
+        hourHistogramPanel = new HistogramPanel();
+        c.weighty = 1.0;
+        c.fill = GridBagConstraints.BOTH;
+        mainPanel.add(hourHistogramPanel, c);
+        weekdayHistogramPanel = new HistogramPanel();
+        mainPanel.add(weekdayHistogramPanel, c);
+//        c.weighty = 0.0;
+//        c.fill = GridBagConstraints.NONE;
+//        pane.add(new JLabel("intervals"), c);
+
+        Container pane = frame.getContentPane();
+        pane.add(scrollPane);
+        frame.pack();
+        frame.setVisible(true);
+
+        reloadData();
+    }
+
+    public static void run(StatsApp statsApp) {
+        final Gui gui = new Gui(statsApp);
+
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
 
             public void run() {
-                createAndShowGUI();
+                gui.createAndShowGUI();
             }
         });
     }
+
+    void reloadData() {
+        SwingWorker worker = new SwingWorker<Void, Void>() {
+            public Void doInBackground() {
+                statsApp.reload();
+                return null;
+            }
+            @Override
+            public void done() {
+                refreshCharts();
+            }
+        };
+        worker.execute();
+    }
+
+    void refreshCharts() {
+        hourHistogramPanel.setHistogram(statsApp.getHourHistogram());
+        weekdayHistogramPanel.setHistogram(statsApp.getWeekdayHistogram());
+    }
+
+    StatsApp statsApp;
+    JFrame frame;
+    HistogramPanel hourHistogramPanel;
+    HistogramPanel weekdayHistogramPanel;
 }

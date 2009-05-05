@@ -1,6 +1,5 @@
 package org.zamecnik.jacomo;
 
-import java.util.Collection;
 import org.zamecnik.jacomo.bot.*;
 import org.zamecnik.jacomo.stats.*;
 import org.zamecnik.jacomo.lib.JacomoException;
@@ -30,7 +29,6 @@ public class JacomoApplication {
                 runBot();
             } else if (args[0].equals("-stats")) {
                 runStats();
-                //org.zamecnik.jacomo.stats.Gui.main(args);
             }
         }
     }
@@ -76,33 +74,36 @@ public class JacomoApplication {
             System.err.println("Can't create PresenceManager: " + ex.getMessage());
             return;
         }
-        presenceManager.initialize();
+        presenceManager.refresh();
         //presenceManager.show();
 
         //Interpreter contactsCount = new ContactsCount(presenceManager);
         //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
         //System.out.println("ContactsCount: " + result.getContactsCount());
 
-        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
+//        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
+//
+//        Histogram histogram = Histogram.hourHistogram;
+//        Quantizer quantizer = Quantizer.hourQuantizer;
+////        Histogram histogram = Histogram.weekdayHistogram;
+////        Quantizer quantizer = Quantizer.weekdayQuantizer;
+//
+//        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
+//        System.out.println("quantization sums:");
+//        for (int i = 0; i < quantizationSums.length; i++) {
+//            System.out.print(quantizationSums[i] + ", ");
+//        }
+//        System.out.println();
+//
+//        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
+//        System.out.println("histogram:");
+//        for (int i = 0; i < scaledHistogramResult.length; i++) {
+//            System.out.print(scaledHistogramResult[i] + ", ");
+//        }
+//        System.out.println();
 
-        Histogram histogram = Histogram.hourHistogram;
-        Quantizer quantizer = Quantizer.hourQuantizer;
-//        Histogram histogram = Histogram.weekdayHistogram;
-//        Quantizer quantizer = Quantizer.weekdayQuantizer;
-
-        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
-        System.out.println("quantization sums:");
-        for (int i = 0; i < quantizationSums.length; i++) {
-            System.out.print(quantizationSums[i] + ", ");
-        }
-        System.out.println();
-
-        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
-        System.out.println("histogram:");
-        for (int i = 0; i < scaledHistogramResult.length; i++) {
-            System.out.print(scaledHistogramResult[i] + ", ");
-        }
-        System.out.println();
+        StatsApp statsApp = new StatsApp(presenceManager);
+        Gui.run(statsApp);
     }
 
     static void initProperties() {

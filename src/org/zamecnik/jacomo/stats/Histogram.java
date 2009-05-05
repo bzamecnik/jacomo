@@ -46,7 +46,7 @@ public class Histogram {
         return scaledHistogram;
     }
 
-    int histogramSize;
+    final int histogramSize;
 
     public static final Histogram hourHistogram;
     public static final Histogram weekdayHistogram;

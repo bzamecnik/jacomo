@@ -1,6 +1,5 @@
 package org.zamecnik.jacomo.stats;
 
-import java.util.Random;
 import javax.swing.JPanel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -21,7 +20,12 @@ import org.jfree.data.xy.XYSeriesCollection;
 public class HistogramPanel extends JPanel {
 
     public HistogramPanel() {
-        JFreeChart chart = createChart(createDataset());
+        //setHistogram(histogram);
+        series = new XYSeries("online users histogram");
+        XYSeriesCollection collection = new XYSeriesCollection();
+        collection.addSeries(series);
+        dataset = new XYBarDataset(collection, 0.9);
+        chart = createChart(dataset);
         add(new ChartPanel(chart));
     }
 
@@ -45,14 +49,15 @@ public class HistogramPanel extends JPanel {
         return chart;
     }
 
-    private static IntervalXYDataset createDataset() {
-        XYSeries series = new XYSeries("online user count");
-        Random rnd = new Random();
-        for (int i = 1; i <= 24; i++) {
-            series.add(i - 0.5, rnd.nextInt(100));
+    public void setHistogram(double[] histogram) {
+        XYSeries updatedSeries = new XYSeries("online users histogram");
+        for (int i = 0; i < histogram.length; i++) {
+            series.add(i, histogram[i]);
         }
-        XYSeriesCollection collection = new XYSeriesCollection();
-        collection.addSeries(series);
-        return new XYBarDataset(collection, 0.9);
+        series = updatedSeries;
     }
+
+    JFreeChart chart;
+    XYBarDataset dataset;
+    XYSeries series;
 }

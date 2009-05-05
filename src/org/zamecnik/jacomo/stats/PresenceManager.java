@@ -25,7 +25,7 @@ public class PresenceManager {
         contacts = new HashMap<Integer, Contact>();
     }
 
-    public void initialize() {
+    public void refresh() {
         // - load contact bot presence changes
         List<PresenceChange> presenceList = dbBackend.getBotPresenceChangesList();
 
