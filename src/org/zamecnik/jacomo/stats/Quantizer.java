@@ -135,13 +135,7 @@ public class Quantizer {
         // get a list of time points from each interval list
         List<List<Date>> points = new ArrayList<List<Date>>();
         for (IntervalList intervalList : intervalLists) {
-            List<Date> currentPoints = intervalList.getTimePointsList();
-            // correct end points to close the open intervals at 'now' time
-            // add end point to close the interval if the last interval is open
-            if ((currentPoints.size() % 2) != 0) {
-                currentPoints.add(endPoint);
-            }
-            points.add(currentPoints);
+            points.add(intervalList.getFixedTimePointsList(endPoint));
         }
         return points;
     }

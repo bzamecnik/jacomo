@@ -32,12 +32,16 @@ public class Gui {
 
         c.gridwidth = GridBagConstraints.REMAINDER;
         mainPanel.add(new JLabel("count"), c);
-        hourHistogramPanel = new HistogramPanel();
+        
         c.weighty = 1.0;
         c.fill = GridBagConstraints.BOTH;
-        mainPanel.add(hourHistogramPanel, c);
+
+        intervalPanel = new IntervalPanel();
+        mainPanel.add(intervalPanel, c);
+        hourHistogramPanel = new HistogramPanel();
+        //mainPanel.add(hourHistogramPanel, c);
         weekdayHistogramPanel = new HistogramPanel();
-        mainPanel.add(weekdayHistogramPanel, c);
+        //mainPanel.add(weekdayHistogramPanel, c);
 //        c.weighty = 0.0;
 //        c.fill = GridBagConstraints.NONE;
 //        pane.add(new JLabel("intervals"), c);
@@ -78,10 +82,12 @@ public class Gui {
     void refreshCharts() {
         hourHistogramPanel.setHistogram(statsApp.getHourHistogram());
         weekdayHistogramPanel.setHistogram(statsApp.getWeekdayHistogram());
+        intervalPanel.setIntervals(statsApp.getIntervalsWithContactNames());
     }
 
     StatsApp statsApp;
     JFrame frame;
     HistogramPanel hourHistogramPanel;
     HistogramPanel weekdayHistogramPanel;
+    IntervalPanel intervalPanel;
 }

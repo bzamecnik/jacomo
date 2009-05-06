@@ -66,6 +66,17 @@ public class IntervalList {
         return Collections.unmodifiableList(timePoints);
     }
 
+    public List<Date> getFixedTimePointsList(Date endPoint) {
+        // correct end points to close the open intervals at 'now' time
+        // add end point to close the interval if the last interval is open
+        if ((timePoints.size() % 2) != 0) {
+            List<Date> points = new ArrayList<Date>(timePoints);
+            points.add(endPoint);
+            return Collections.unmodifiableList(points);
+        }
+        return Collections.unmodifiableList(timePoints);
+    }
+
     // Note: both lists must be sorted boforehand
     public static IntervalList intersect(IntervalList lhs, IntervalList rhs) {
         // based on X-transition list from RNDr. Pelikan's 16-imagecoding.pdf

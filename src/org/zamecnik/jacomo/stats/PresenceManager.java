@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  *
@@ -87,6 +88,16 @@ public class PresenceManager {
     public Collection<IntervalList> getAllPresenceIntervals() {
         // give read-only access
         return Collections.unmodifiableCollection(contactIntervals.values());
+    }
+
+    public Map<Contact, IntervalList> getPresenceIntervalsWithContacts() {
+        // give read-only access
+        Map<Contact, IntervalList> map = new HashMap<Contact, IntervalList>();
+        for (Entry<Integer, IntervalList> entry : contactIntervals.entrySet()) {
+            Contact contact = contacts.get(entry.getKey());
+            map.put(contact, entry.getValue());
+        }
+        return Collections.unmodifiableMap(map);
     }
 
     // DEBUG

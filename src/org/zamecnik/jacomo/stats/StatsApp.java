@@ -1,6 +1,8 @@
 package org.zamecnik.jacomo.stats;
 
 import java.util.Collection;
+import java.util.Map;
+import org.zamecnik.jacomo.lib.Contact;
 
 /**
  *
@@ -18,7 +20,8 @@ public class StatsApp {
     public void reload() {
         presenceManager.refresh();
 
-        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
+        intervalsWithContactNames = presenceManager.getPresenceIntervalsWithContacts();
+        Collection<IntervalList> intervalLists = intervalsWithContactNames.values();
 
         hourQuantizationSums = hourQuantizer.quantizeAndSum(intervalLists);
         scaledHourHistogramResult = hourHistogram.computeScaledHistogram(hourQuantizationSums);
@@ -35,15 +38,21 @@ public class StatsApp {
         return scaledWeekdayHistogramResult;
     }
 
-    PresenceManager presenceManager;
+    public Map<Contact, IntervalList> getIntervalsWithContactNames() {
+        return intervalsWithContactNames;
+    }
 
-    Histogram hourHistogram;
-    Quantizer hourQuantizer;
-    int[] hourQuantizationSums;
-    double[] scaledHourHistogramResult;
+    private PresenceManager presenceManager;
 
-    Histogram weekdayHistogram;
-    Quantizer weekdayQuantizer;
-    int[] weekdayQuantizationSums;
-    double[] scaledWeekdayHistogramResult;
+    private Histogram hourHistogram;
+    private Quantizer hourQuantizer;
+    private int[] hourQuantizationSums;
+    private double[] scaledHourHistogramResult;
+
+    private Histogram weekdayHistogram;
+    private Quantizer weekdayQuantizer;
+    private int[] weekdayQuantizationSums;
+    private double[] scaledWeekdayHistogramResult;
+
+    private Map<Contact, IntervalList> intervalsWithContactNames;
 }
