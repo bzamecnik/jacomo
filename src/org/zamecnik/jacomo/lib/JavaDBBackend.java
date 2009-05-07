@@ -22,6 +22,9 @@ public class JavaDBBackend implements DBBackend {
 
     public JavaDBBackend() throws JacomoException {
         String dbName = System.getProperty("jacomo.dbName");
+        if ((dbName == null) || dbName.isEmpty()) {
+            throw new JacomoException("No database specified.");
+        }
         String strUrl = "jdbc:derby:" + dbName + ";create=true";
         String homeDir = System.getProperty("jacomo.homeDir", ".");
         System.out.println("home directory:" + homeDir);
@@ -355,6 +358,15 @@ public class JavaDBBackend implements DBBackend {
             ex.printStackTrace();
         }
         return presenceChanges;
+    }
+
+    public void dispose() {
+        System.out.println("JavaDBBackend dispose()");
+        try {
+            dbConnection.close();
+        } catch(SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
     int getContactId(String contact) {

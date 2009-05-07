@@ -19,8 +19,8 @@ public class PresenceManager {
 
     DBBackend dbBackend;
 
-    public PresenceManager() throws JacomoException{
-        dbBackend = new JavaDBBackend();
+    public PresenceManager(DBBackend dbBackend) {
+        this.dbBackend = dbBackend;
         botPresenceIntervals = new IntervalList();
         contactIntervals = new HashMap<Integer, IntervalList>();
         contacts = new HashMap<Integer, Contact>();
@@ -98,6 +98,10 @@ public class PresenceManager {
             map.put(contact, entry.getValue());
         }
         return Collections.unmodifiableMap(map);
+    }
+
+    public void dispose() {
+        dbBackend.dispose();
     }
 
     // DEBUG

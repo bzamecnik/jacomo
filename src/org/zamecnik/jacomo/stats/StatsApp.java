@@ -3,14 +3,16 @@ package org.zamecnik.jacomo.stats;
 import java.util.Collection;
 import java.util.Map;
 import org.zamecnik.jacomo.lib.Contact;
+import org.zamecnik.jacomo.lib.DBBackend;
 
 /**
  *
  * @author Bohouš
  */
 public class StatsApp {
-    public StatsApp(PresenceManager presenceManager) {
-        this.presenceManager = presenceManager;
+    public StatsApp(DBBackend dbBackend) {
+        presenceManager = new PresenceManager(dbBackend);
+        presenceManager.refresh();
         hourHistogram = Histogram.hourHistogram;
         hourQuantizer = Quantizer.hourQuantizer;
         weekdayHistogram = Histogram.weekdayHistogram;

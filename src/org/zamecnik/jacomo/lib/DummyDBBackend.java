@@ -1,7 +1,6 @@
 package org.zamecnik.jacomo.lib;
 
 //import bot.Logger.Contact;
-import org.zamecnik.jacomo.lib.PresenceStatus;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
@@ -55,6 +54,9 @@ public class DummyDBBackend implements DBBackend {
 
     public List<PresenceChange> getContactPresenceChangesList(int contactId) {
         return new ArrayList<PresenceChange>();
+    }
+
+    public void dispose() {
     }
 
 }

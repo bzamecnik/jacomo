@@ -11,12 +11,32 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
 
 /**
+ * Logger act as a Jabber bot which logs the contacts' presence changes.
+ * It uses Smack library for Jabber stuff. To work properly, it must connect to
+ * two backends at first: a database and a Jabber account. Then it is possible
+ * to start logging. It gets presence change events from the Jabber server and
+ * stores it into the database. It is possible to use a filter to decide which
+ * contacts to exclude.
+ *
+ * A Logger instance holds a XMPPConnection resource and also an instance
+ * of ContactFilter.
+ *
+ * Usage:
+ *
+ *   * Startup procedure:
+ *     * call login() to connect to Jabber server
+ *     * call start() to start logging
+ *   * Shutdown procedure:
+ *     * call stop() to stop logging
+ *     * call logout() to disconnect to Jabber server
+ *
+ * It is possible to pause loggin without leaving Jabber server.
  *
  * @author Bohouš
  */
 public class Logger {
 
-    public Logger() throws JacomoException {
+    public Logger(DBBackend dbBackend) throws JacomoException {
         System.out.println("Logger()");
         state = LoggerState.NOT_PREPARED;
 
@@ -27,13 +47,12 @@ public class Logger {
         contactFilter.addBlacklistKeyword("weather.netlab.cz");
         contactFilter.addBlacklistKeyword("live@jabbim.cz"); // whole JID
 
-        //dbBackend = new DummyDBBackend();
-        dbBackend = new JavaDBBackend();
+        this.dbBackend = dbBackend;
 
-        String jabberServer = System.getProperty("jacomo.bot.jabberServer");
+        String jabberServer = System.getProperty("jacomo.jabberServer");
         System.out.println("jabber server: " + jabberServer);
         if (jabberServer == null) {
-            throw new JacomoException("jacomo.bot.jabberServer is not specified.");
+            throw new JacomoException("jacomo.jabberServer is not specified.");
         }
         jabberConnection = new XMPPConnection(jabberServer);
 
@@ -83,18 +102,18 @@ public class Logger {
         if (state == LoggerState.PREPARED) {
             registerJabberHandlers();
             state = LoggerState.RUNNING;
-        }
-        // log contacts being currently online
-        Roster roster = jabberConnection.getRoster();
-        for (RosterEntry entry : roster.getEntries()) {
-            String jid = stripJID(entry.getUser());
-            Presence presence = roster.getPresence(jid);
-            if (presence.isAvailable()) {
-                changeContactPresence(presence);
+            // log contacts being currently online
+            Roster roster = jabberConnection.getRoster();
+            for (RosterEntry entry : roster.getEntries()) {
+                String jid = stripJID(entry.getUser());
+                Presence presence = roster.getPresence(jid);
+                if (presence.isAvailable()) {
+                    changeContactPresence(presence);
+                }
             }
+            // write ONLINE to own presence log
+            dbBackend.changeBotPresence(true);
         }
-        // write ONLINE to own presence log
-        dbBackend.changeBotPresence(true);
     }
 
     /**
@@ -105,20 +124,20 @@ public class Logger {
         if (state == LoggerState.RUNNING) {
             unregisterJabberHandlers();
             state = LoggerState.PREPARED;
-        }
-        // log contacts being currently online as they would have disconnected
-        Roster roster = jabberConnection.getRoster();
-        for (RosterEntry entry : roster.getEntries()) {
-            String jid = stripJID(entry.getUser());
-            Presence presence = roster.getPresence(jid);
-            if (presence.isAvailable()) {
-                // treat it as offline
-                presence.setType(Presence.Type.unavailable);
-                changeContactPresence(presence);
+            // log contacts being currently online as they would have disconnected
+            Roster roster = jabberConnection.getRoster();
+            for (RosterEntry entry : roster.getEntries()) {
+                String jid = stripJID(entry.getUser());
+                Presence presence = roster.getPresence(jid);
+                if (presence.isAvailable()) {
+                    // treat it as offline
+                    presence.setType(Presence.Type.unavailable);
+                    changeContactPresence(presence);
+                }
             }
+            // write OFFLINE to own presence log
+            dbBackend.changeBotPresence(false);
         }
-        // write OFFLINE to own presence log
-        dbBackend.changeBotPresence(false);
     }
 
     /**
@@ -126,11 +145,14 @@ public class Logger {
      */
     public void login() throws JacomoException {
         System.out.println("Logger.login()");
+        if (state != LoggerState.NOT_PREPARED) {
+            return;
+        }
         try {
             jabberConnection.connect();
             jabberConnection.login(
-                    System.getProperty("jacomo.bot.jabberUser"),
-                    System.getProperty("jacomo.bot.jabberPassword"));
+                    System.getProperty("jacomo.jabberUser"),
+                    System.getProperty("jacomo.jabberPassword"));
         } catch (XMPPException ex) {
             throw new JacomoException(ex);
         }
@@ -170,6 +192,9 @@ public class Logger {
      */
     public void logout() {
         System.out.println("Logger.logout()");
+        if (state == LoggerState.RUNNING) {
+            stop();
+        }
         if ((state == LoggerState.PREPARED) && jabberConnection.isConnected()) {
             jabberConnection.disconnect();
             state = LoggerState.NOT_PREPARED;
@@ -257,6 +282,11 @@ public class Logger {
     void unregisterJabberHandlers() {
         Roster roster = jabberConnection.getRoster();
         roster.removeRosterListener(rosterListener);
+    }
+
+    public void dispose() {
+        stop();
+        logout();
     }
 
     /**

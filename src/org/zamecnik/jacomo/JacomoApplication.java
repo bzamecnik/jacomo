@@ -1,8 +1,15 @@
 package org.zamecnik.jacomo;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
+import javax.swing.SwingUtilities;
 import org.zamecnik.jacomo.bot.*;
+import org.zamecnik.jacomo.lib.DBBackend;
 import org.zamecnik.jacomo.stats.*;
 import org.zamecnik.jacomo.lib.JacomoException;
+import org.zamecnik.jacomo.lib.JavaDBBackend;
 
 /**
  *
@@ -10,120 +17,183 @@ import org.zamecnik.jacomo.lib.JacomoException;
  */
 public class JacomoApplication {
 
-    public static void main(String[] args) {
-//        Calendar cal = Calendar.getInstance();
-//        //System.out.println("now:" + DateFormat.getDateTimeInstance().format(cal.getTime()));
-//        System.out.println("now:" + cal.getTime().getTime());
-//        //cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
-//        cal.set(Calendar.AM_PM, 0);
-//        cal.set(Calendar.HOUR, 0);
-//        cal.set(Calendar.MINUTE, 0);
-//        cal.set(Calendar.SECOND, 0);
-//        cal.set(Calendar.MILLISECOND, 0);
-//        System.out.println("start of week:" + DateFormat.getDateTimeInstance().format(cal.getTime()));
-//        System.out.println("start of week:" + cal.getTime().getTime());
+    private JacomoApplication() {
+        botApp = new BotApp();
+    }
+    private static JacomoApplication singletonInstance;
 
-        // TODO: run either Bot deamon or Stats GUI based on arguments
-        if (args.length > 0) {
-            if (args[0].equals("-bot")) {
-                runBot();
-            } else if (args[0].equals("-stats")) {
-                runStats();
-            }
+    public static JacomoApplication getInstance() {
+        if (singletonInstance == null) {
+            singletonInstance = new JacomoApplication();
         }
+        return singletonInstance;
     }
 
-    static void runBot() {
+    public static void main(String[] args) {
+
+        // TODO: run either Bot deamon or Stats GUI based on arguments
+//        if (args.length > 0) {
+//            if (args[0].equals("-bot")) {
+//                runBot();
+//            } else if (args[0].equals("-stats")) {
+//                runStats();
+//            }
+//        }
+
+        // TODO: get stored properties from a file
+        // TODO: get stored contact filter configuration
+
+        initProperties();
+
+        SwingUtilities.invokeLater(new Runnable() {
+
+            public void run() {
+                new MainFrame().setVisible(true);
+            }
+        });
+    }
+
+    void runBot() {
         initProperties();
 
         System.out.println("JaCoMo bot");
         Logger logger = null;
         try {
-            logger = new Logger();
-        } catch (JacomoException ex) {
-            System.err.println("Can't create Logger: " + ex.getMessage());
-            return;
-        }
-        try {
-            logger.login();
-        } catch (JacomoException ex) {
-            System.err.println("Can't log in to the jabber server: "
-                    + ex.getMessage());
-            return;
-        }
-        logger.start();
+            try {
+                logger = new Logger(dbBackend);
+            } catch (JacomoException ex) {
+                System.err.println("Can't create Logger: " + ex.getMessage());
+                return;
+            }
+            try {
+                logger.login();
+            } catch (JacomoException ex) {
+                System.err.println("Can't log in to the jabber server: " + ex.getMessage());
+                return;
+            }
+            logger.start();
 
-        System.out.println("Type \"exit\" to shut down the program.");
-        while (!System.console().readLine().startsWith("exit")) {
+            System.out.println("Type \"exit\" to shut down the program.");
+            while (!System.console().readLine().startsWith("exit")) {
+            }
+
+            // TODO: how to implement the loop?
+
+            logger.stop();
+            logger.logout();
+        } finally {
+            logger.dispose();
         }
-
-        // TODO: how to implement the loop?
-
-        logger.stop();
-        logger.logout();
     }
 
-    static void runStats() {
+    void runStats() {
         initProperties();
 
         System.out.println("JaCoMo stats");
-        PresenceManager presenceManager = null;
-        try {
-            presenceManager = new PresenceManager();
-        } catch (JacomoException ex) {
-            System.err.println("Can't create PresenceManager: " + ex.getMessage());
-            return;
-        }
-        presenceManager.refresh();
+            
         //presenceManager.show();
 
         //Interpreter contactsCount = new ContactsCount(presenceManager);
         //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
         //System.out.println("ContactsCount: " + result.getContactsCount());
 
-//        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
-//
-//        Histogram histogram = Histogram.hourHistogram;
-//        Quantizer quantizer = Quantizer.hourQuantizer;
-////        Histogram histogram = Histogram.weekdayHistogram;
-////        Quantizer quantizer = Quantizer.weekdayQuantizer;
-//
-//        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
-//        System.out.println("quantization sums:");
-//        for (int i = 0; i < quantizationSums.length; i++) {
-//            System.out.print(quantizationSums[i] + ", ");
-//        }
-//        System.out.println();
-//
-//        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
-//        System.out.println("histogram:");
-//        for (int i = 0; i < scaledHistogramResult.length; i++) {
-//            System.out.print(scaledHistogramResult[i] + ", ");
-//        }
-//        System.out.println();
+        //        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
+        //
+        //        Histogram histogram = Histogram.hourHistogram;
+        //        Quantizer quantizer = Quantizer.hourQuantizer;
+        ////        Histogram histogram = Histogram.weekdayHistogram;
+        ////        Quantizer quantizer = Quantizer.weekdayQuantizer;
+        //
+        //        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
+        //        System.out.println("quantization sums:");
+        //        for (int i = 0; i < quantizationSums.length; i++) {
+        //            System.out.print(quantizationSums[i] + ", ");
+        //        }
+        //        System.out.println();
+        //
+        //        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
+        //        System.out.println("histogram:");
+        //        for (int i = 0; i < scaledHistogramResult.length; i++) {
+        //            System.out.print(scaledHistogramResult[i] + ", ");
+        //        }
+        //        System.out.println();
 
-        StatsApp statsApp = new StatsApp(presenceManager);
-        Gui.run(statsApp);
     }
 
     static void initProperties() {
-        //// possibly load properties from a file:
-        // Properties p = new Properties(System.getProperties());
-        // FileInputStream propFile = new FileInputStream("config.txt");
-        // p.load()
-        // System.setProperties(p);
+        String homeDir = System.getProperty("user.home", ".") + "/.jacomo";
+        System.setProperty("jacomo.homeDir", homeDir);
 
-        System.setProperty("jacomo.bot.jabberServer", "jabber.cz");
-//        System.setProperty("jacomo.bot.jabberUser", "jacomobot");
-//        System.setProperty("jacomo.bot.jabberPassword", "comchabo");
-        System.setProperty("jacomo.bot.jabberUser", "bohous");
-        System.setProperty("jacomo.bot.jabberPassword", "elensila");
+//        // load properties from a file:
+//        Properties p = new Properties();
+//        String propFile = homeDir + "/jacomo-config.properties";
+//        try {
+//            p.load(new FileReader(propFile));
+//        } catch (FileNotFoundException ex) {
+//            System.err.println("Properties file " + propFile + " not found.");
+//            System.exit(1);
+//        } catch (IOException ex) {
+//            System.err.println("Error loading properties file: " + ex.getMessage());
+//            System.exit(1);
+//        }
+//        p.putAll(System.getProperties());
+//        System.setProperties(p);
+    }
 
-        System.setProperty("jacomo.homeDir",
-                System.getProperty("user.home", ".") + "/.jacomo");
+    public static void setJabberProperties(
+            String server, String user, String passsword) {
+        Properties props = new Properties();
+        props.putAll(System.getProperties());
+        props.setProperty("jacomo.jabberServer", server);
+        props.setProperty("jacomo.jabberUser", user);
+        props.setProperty("jacomo.jabberPassword", passsword);
+        if (!server.isEmpty() && !user.isEmpty()) {
+            props.setProperty("jacomo.dbName", user + "_" + server);
+        }
+        System.setProperties(props);
+    }
 
-        System.setProperty("jacomo.dbName",
-                System.getProperty("jacomo.bot.jabberUser") + "_" +
-                System.getProperty("jacomo.bot.jabberServer"));
+    public boolean startDatabase() {
+        try {
+            dbBackend = new JavaDBBackend();
+        } catch (JacomoException ex) {
+            System.err.println("Can't connect to database: " + ex.getMessage());
+            return false;
+        }
+        botApp.setDbBackend(dbBackend);
+        statsApp = new StatsApp(dbBackend);
+        return true;
+    }
+
+    public void stopDatabase() {
+        if (dbBackend != null) {
+            dbBackend.dispose();
+            dbBackend = null;
+            statsApp = null;
+        }
+    }
+
+    public void dispose() {
+        System.out.println("JacomoApplication dispose()");
+        botApp.dispose();
+        stopDatabase();
+    }
+
+    private DBBackend dbBackend;
+    private BotApp botApp;
+    private StatsApp statsApp;
+
+    /**
+     * @return the botApp
+     */
+    public BotApp getBotApp() {
+        return botApp;
+    }
+
+    /**
+     * @return the statsApp
+     */
+    public StatsApp getStatsApp() {
+        return statsApp;
     }
 }

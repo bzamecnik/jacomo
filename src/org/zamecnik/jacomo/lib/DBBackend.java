@@ -50,4 +50,6 @@ public interface DBBackend {
     List<PresenceChange> getPresenceChangesList();
 
     List<PresenceChange> getContactPresenceChangesList(int contactId);
+
+    void dispose();
 }
