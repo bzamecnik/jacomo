@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.ListIterator;
 import org.zamecnik.jacomo.lib.PresenceStatus;
 
-import java.util.Calendar;
+//import java.util.Calendar;
 
 /**
  *
@@ -134,29 +134,29 @@ public class IntervalList {
         return sb.toString();
     }
 
-    public static void testIntersect() {
-        IntervalList list1 = new IntervalList();
-        IntervalList list2 = new IntervalList();
-        Calendar cal = Calendar.getInstance();
-        cal.set(2009, 04, 15, 22, 30, 00);
-        list1.add(cal.getTime());
-        cal.add(Calendar.MINUTE, 5);
-        list1.add(cal.getTime());
-        cal.add(Calendar.MINUTE, 3);
-        list1.add(cal.getTime());
-        cal.add(Calendar.MINUTE, 2);
-        list1.add(cal.getTime());
-        cal.add(Calendar.MINUTE, 7);
-        list1.add(cal.getTime());
-
-        cal.set(Calendar.MINUTE, 30);
-        list2.add(cal.getTime());
-        cal.add(Calendar.MINUTE, 9);
-        list2.add(cal.getTime());
-
-        System.out.println("list1: " + list1);
-        System.out.println("list2: " + list2);
-        IntervalList listIntersect = intersect(list2, list1);
-        System.out.println("list intersection: " + listIntersect);
-    }
+//    public static void testIntersect() {
+//        IntervalList list1 = new IntervalList();
+//        IntervalList list2 = new IntervalList();
+//        Calendar cal = Calendar.getInstance();
+//        cal.set(2009, 04, 15, 22, 30, 00);
+//        list1.add(cal.getTime());
+//        cal.add(Calendar.MINUTE, 5);
+//        list1.add(cal.getTime());
+//        cal.add(Calendar.MINUTE, 3);
+//        list1.add(cal.getTime());
+//        cal.add(Calendar.MINUTE, 2);
+//        list1.add(cal.getTime());
+//        cal.add(Calendar.MINUTE, 7);
+//        list1.add(cal.getTime());
+//
+//        cal.set(Calendar.MINUTE, 30);
+//        list2.add(cal.getTime());
+//        cal.add(Calendar.MINUTE, 9);
+//        list2.add(cal.getTime());
+//
+//        System.out.println("list1: " + list1);
+//        System.out.println("list2: " + list2);
+//        IntervalList listIntersect = intersect(list2, list1);
+//        System.out.println("list intersection: " + listIntersect);
+//    }
 }

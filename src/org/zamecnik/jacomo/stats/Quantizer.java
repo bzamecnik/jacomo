@@ -104,7 +104,7 @@ public class Quantizer {
         // compute number of samples
         int nSamples = (int) ((lastPoint - firstPoint));
         int[] summedSamples = new int[nSamples];
-        
+
         // TODO: initialize summedSamples to 0 (is it automatic?)
 
         // - for each list of points:

@@ -33,8 +33,10 @@ public class MainFrame extends JFrame {
         //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
+
             @Override
             public void windowClosing(WindowEvent we) {
+                PropertiesHelper.saveProperties();
                 JacomoApplication.getInstance().dispose();
                 setVisible(false);
                 dispose();
@@ -55,10 +57,9 @@ public class MainFrame extends JFrame {
                 if (dialog.isConfirmed()) {
                     String server = dialog.getJabberServer();
                     String username = dialog.getJabberUsername();
-                    JacomoApplication.setJabberProperties(
-                        server, username,
-                        new String(dialog.getJabberPassword())
-                        );
+                    PropertiesHelper.setJabberProperties(
+                            server, username,
+                            new String(dialog.getJabberPassword()));
                     jabberConfigServerLabel.setText(server);
                     jabberConfigUsernameLabel.setText(username);
                 }
@@ -76,15 +77,17 @@ public class MainFrame extends JFrame {
                     // TODO: support progress - print status changes somewhere
                     if (selected) {
                         new SwingWorker<Boolean, Void>() {
+
                             public Boolean doInBackground() {
                                 return app.startDatabase();
                             }
+
                             @Override
                             public void done() {
                                 boolean databaseStarted = false;
                                 try {
                                     databaseStarted = get();
-                                } catch(Exception ex) {
+                                } catch (Exception ex) {
                                 }
                                 if (databaseStarted) {
                                     System.out.println("action listener (database): showing charts");
@@ -113,15 +116,17 @@ public class MainFrame extends JFrame {
                     final BotApp botApp = app.getBotApp();
                     if (selected) {
                         new SwingWorker<Boolean, Void>() {
+
                             public Boolean doInBackground() {
                                 return botApp.startJabber();
                             }
+
                             @Override
                             public void done() {
                                 boolean jabberStarted = false;
                                 try {
                                     jabberStarted = get();
-                                } catch(Exception ex) {
+                                } catch (Exception ex) {
                                 }
                                 if (jabberStarted) {
                                     loggerButton.setEnabled(true);
@@ -172,7 +177,7 @@ public class MainFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 // refresh charts
                 chartsPanel.reloadData();
-                // TODO: support progress - print status changes somewhere
+            // TODO: support progress - print status changes somewhere
             }
         });
 
@@ -190,11 +195,11 @@ public class MainFrame extends JFrame {
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.LINE_AXIS));
 
         infoPanel.add(new JLabel("Jabber server: "));
-        jabberConfigServerLabel = new JLabel();
+        jabberConfigServerLabel = new JLabel(System.getProperty("jacomo.jabberServer"));
         infoPanel.add(jabberConfigServerLabel);
         infoPanel.add(Box.createRigidArea(new Dimension(20, 0)));
         infoPanel.add(new JLabel("Username: "));
-        jabberConfigUsernameLabel = new JLabel();
+        jabberConfigUsernameLabel = new JLabel(System.getProperty("jacomo.jabberUser"));
         infoPanel.add(jabberConfigUsernameLabel);
         infoPanel.add(Box.createHorizontalGlue());
         infoPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));

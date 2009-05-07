@@ -29,7 +29,8 @@ public class ConfigDialog extends JDialog implements ActionListener {
                 System.getProperty("jacomo.jabberServer"));
         jabberUsernameTextField = new JTextField(
                 System.getProperty("jacomo.jabberUser"));
-        jabberPasswordField = new JPasswordField();
+        jabberPasswordField = new JPasswordField(
+                System.getProperty("jacomo.jabberPassword"));
 
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(this);

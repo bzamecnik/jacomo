@@ -31,15 +31,15 @@ public class HistogramPanel extends JPanel {
 
     private static JFreeChart createChart(IntervalXYDataset dataset) {
         JFreeChart chart = ChartFactory.createXYBarChart(
-            "Histogram",              // chart title
-            "Hour",                   // domain axis label
-            false,
-            "Users online",           // range axis label
-            dataset,                  // data
-            PlotOrientation.VERTICAL, // orientation
-            true,                     // include legend
-            false,                    // tooltips
-            false );                  // urls
+                "Histogram", // chart title
+                "Hour", // domain axis label
+                false,
+                "Users online", // range axis label
+                dataset, // data
+                PlotOrientation.VERTICAL, // orientation
+                true, // include legend
+                false, // tooltips
+                false);                  // urls
 
         XYPlot plot = (XYPlot) chart.getPlot();
         NumberAxis domainAxis = (NumberAxis) plot.getDomainAxis();
@@ -56,8 +56,7 @@ public class HistogramPanel extends JPanel {
         }
         series = updatedSeries;
     }
-
-    JFreeChart chart;
-    XYBarDataset dataset;
-    XYSeries series;
+    private JFreeChart chart;
+    private XYBarDataset dataset;
+    private XYSeries series;
 }

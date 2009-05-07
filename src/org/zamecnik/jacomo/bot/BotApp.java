@@ -55,13 +55,13 @@ public class BotApp {
         stopJabber();
     }
 
-    private Logger logger;
-    private DBBackend dbBackend;
-
     /**
      * @param dbBackend the dbBackend to set
      */
     public void setDbBackend(DBBackend dbBackend) {
         this.dbBackend = dbBackend;
     }
+
+    private Logger logger;
+    private DBBackend dbBackend;
 }

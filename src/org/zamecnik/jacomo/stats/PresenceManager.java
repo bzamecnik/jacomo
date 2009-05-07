@@ -13,11 +13,6 @@ import java.util.Map.Entry;
  * @author Bohouš
  */
 public class PresenceManager {
-    IntervalList botPresenceIntervals;
-    Map<Integer, IntervalList> contactIntervals;
-    Map<Integer, Contact> contacts;
-
-    DBBackend dbBackend;
 
     public PresenceManager(DBBackend dbBackend) {
         this.dbBackend = dbBackend;
@@ -49,7 +44,7 @@ public class PresenceManager {
 
         // - load contact presence changes
         //   - interpret them as time intervals (intersected by bot presence)
-        
+
         // TODO: possible optimization:
         //   - get changes in one SQL query using getPresenceChangesList()
         //   - separate change sets for each contact here
@@ -65,10 +60,10 @@ public class PresenceManager {
                 onlinePreviousStatus = onlineCurrentStatus;
             }
             contactIntervals.put(contactId,
-                IntervalList.intersect(currentIntervalList, botPresenceIntervals));
+                    IntervalList.intersect(currentIntervalList, botPresenceIntervals));
         }
 
-        // - register in bot for update notification
+    // - register in bot for update notification
     }
 
     public Map getContacts() {
@@ -104,25 +99,29 @@ public class PresenceManager {
         dbBackend.dispose();
     }
 
-    // DEBUG
-    public void show() {
-        System.out.println("Presence Manager");
-        System.out.println("Bot presence intervals");
-        System.out.println(botPresenceIntervals.toString());
-        System.out.println();
-
-        System.out.println("Contacts (size: " + contacts.size() + "):");
-        for (Map.Entry<Integer, Contact> entry : contacts.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
-
-        }
-        System.out.println();
-
-        System.out.println("Contact presence intervals:");
-        for (Map.Entry<Integer, IntervalList> entry : contactIntervals.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
-
-        }
-        System.out.println();
-    }
+//    // DEBUG
+//    public void show() {
+//        System.out.println("Presence Manager");
+//        System.out.println("Bot presence intervals");
+//        System.out.println(botPresenceIntervals.toString());
+//        System.out.println();
+//
+//        System.out.println("Contacts (size: " + contacts.size() + "):");
+//        for (Map.Entry<Integer, Contact> entry : contacts.entrySet()) {
+//            System.out.println(entry.getKey() + ": " + entry.getValue());
+//
+//        }
+//        System.out.println();
+//
+//        System.out.println("Contact presence intervals:");
+//        for (Map.Entry<Integer, IntervalList> entry : contactIntervals.entrySet()) {
+//            System.out.println(entry.getKey() + ": " + entry.getValue());
+//
+//        }
+//        System.out.println();
+//    }
+    IntervalList botPresenceIntervals;
+    Map<Integer, IntervalList> contactIntervals;
+    Map<Integer, Contact> contacts;
+    DBBackend dbBackend;
 }

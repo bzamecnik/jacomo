@@ -92,7 +92,7 @@ public class IntervalPanel extends JPanel {
         }
     }
 
-    JFreeChart chart;
-    XYPlot plot;
-    XYIntervalSeriesCollection dataset;
+    private JFreeChart chart;
+    private XYPlot plot;
+    private XYIntervalSeriesCollection dataset;
 }
