@@ -17,7 +17,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.SwingWorker;
 import org.zamecnik.jacomo.bot.BotApp;
+import org.zamecnik.jacomo.stats.ChartsPanel;
 
 /**
  *
@@ -66,41 +68,73 @@ public class MainFrame extends JFrame {
         ActionListener toggleActionListener = new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                JacomoApplication app = JacomoApplication.getInstance();
+                final JacomoApplication app = JacomoApplication.getInstance();
                 if ("database".equals(e.getActionCommand())) {
-                    boolean selected = databaseButton.isSelected();
+                    final boolean selected = databaseButton.isSelected();
                     configButton.setEnabled(!selected);
                     // connect/disconnect to database
-                    // TODO: use SwingWorker
                     // TODO: support progress - print status changes somewhere
                     if (selected) {
-                        if (!app.startDatabase()){
-                            databaseButton.setSelected(false); // rollback
-                            configButton.setEnabled(true);
-                            return;
-                        }
+                        new SwingWorker<Boolean, Void>() {
+                            public Boolean doInBackground() {
+                                return app.startDatabase();
+                            }
+                            @Override
+                            public void done() {
+                                boolean databaseStarted = false;
+                                try {
+                                    databaseStarted = get();
+                                } catch(Exception ex) {
+                                }
+                                if (databaseStarted) {
+                                    System.out.println("action listener (database): showing charts");
+                                    chartsPanel.setStatsApp(app.getStatsApp());
+                                    jabberButton.setEnabled(true);
+                                    refreshButton.setEnabled(true);
+                                } else {
+                                    databaseButton.setSelected(false); // rollback
+                                    configButton.setEnabled(true);
+                                    System.out.println("action listener (database): rollback");
+                                    return;
+                                }
+                            }
+                        }.execute();
                     } else {
-                        app.stopDatabase();
+                        jabberButton.setEnabled(false);
+                        refreshButton.setEnabled(false);
+                        app.stopDatabase(); // TODO: in SwingWorker
+                        chartsPanel.setStatsApp(null);
                     }
-                    jabberButton.setEnabled(selected);
-                    refreshButton.setEnabled(selected);
                 } else if ("jabber".equals(e.getActionCommand())) {
-                    boolean selected = jabberButton.isSelected();
+                    final boolean selected = jabberButton.isSelected();
                     databaseButton.setEnabled(!selected);
                     // connect/disconnect to jabber here
-                    // TODO: use SwingWorker
                     // TODO: support progress - print status changes somewhere
-                    BotApp botApp = app.getBotApp();
+                    final BotApp botApp = app.getBotApp();
                     if (selected) {
-                        if (!botApp.startJabber()) {
-                            jabberButton.setSelected(false); // rollback
-                            databaseButton.setEnabled(true);
-                            return;
-                        }
+                        new SwingWorker<Boolean, Void>() {
+                            public Boolean doInBackground() {
+                                return botApp.startJabber();
+                            }
+                            @Override
+                            public void done() {
+                                boolean jabberStarted = false;
+                                try {
+                                    jabberStarted = get();
+                                } catch(Exception ex) {
+                                }
+                                if (jabberStarted) {
+                                    loggerButton.setEnabled(true);
+                                } else {
+                                    jabberButton.setSelected(false); // rollback
+                                    databaseButton.setEnabled(true);
+                                }
+                            }
+                        }.execute();
                     } else {
-                        botApp.stopJabber();
+                        loggerButton.setEnabled(false);
+                        botApp.stopJabber(); // TODO: in SwingWorker
                     }
-                    loggerButton.setEnabled(selected);
                 } else if ("logger".equals(e.getActionCommand())) {
                     boolean selected = loggerButton.isSelected();
                     jabberButton.setEnabled(!selected);
@@ -115,6 +149,8 @@ public class MainFrame extends JFrame {
                 }
             }
         };
+        // TODO: a second click on this button while connecting to the database
+        // should cancel the action (SwingWorker.cancel())
         databaseButton = new JToggleButton("Database");
         databaseButton.setActionCommand("database");
         databaseButton.addActionListener(toggleActionListener);
@@ -134,8 +170,8 @@ public class MainFrame extends JFrame {
         refreshButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                // TODO: refresh charts
-                // TODO: use SwingWorker
+                // refresh charts
+                chartsPanel.reloadData();
                 // TODO: support progress - print status changes somewhere
             }
         });
@@ -147,8 +183,8 @@ public class MainFrame extends JFrame {
         toolBar.add(refreshButton);
         mainPane.add(toolBar, BorderLayout.NORTH);
 
-        JPanel chartPanel = new JPanel();
-        chartPanel.setLayout(new BoxLayout(chartPanel, BoxLayout.PAGE_AXIS));
+        JPanel contentsPanel = new JPanel();
+        contentsPanel.setLayout(new BoxLayout(contentsPanel, BoxLayout.PAGE_AXIS));
 
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.LINE_AXIS));
@@ -163,12 +199,13 @@ public class MainFrame extends JFrame {
         infoPanel.add(Box.createHorizontalGlue());
         infoPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-
-        chartPanel.add(infoPanel);
-        chartPanel.add(new JLabel("intervals"));
-        chartPanel.add(new JLabel("hour histogram"));
-        chartPanel.add(new JLabel("weekday histogram"));
-        mainPane.add(new JScrollPane(chartPanel), BorderLayout.CENTER);
+        contentsPanel.add(infoPanel);
+        chartsPanel = new ChartsPanel(this);
+        contentsPanel.add(chartsPanel);
+//        chartPanel.add(new JLabel("intervals"));
+//        chartPanel.add(new JLabel("hour histogram"));
+//        chartPanel.add(new JLabel("weekday histogram"));
+        mainPane.add(new JScrollPane(contentsPanel), BorderLayout.CENTER);
 
         pack();
         setVisible(true);
@@ -180,4 +217,5 @@ public class MainFrame extends JFrame {
     private JButton refreshButton;
     private JLabel jabberConfigServerLabel;
     private JLabel jabberConfigUsernameLabel;
+    private ChartsPanel chartsPanel;
 }

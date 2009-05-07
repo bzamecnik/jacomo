@@ -1,8 +1,5 @@
 package org.zamecnik.jacomo;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Properties;
 import javax.swing.SwingUtilities;
 import org.zamecnik.jacomo.bot.*;
@@ -90,33 +87,33 @@ public class JacomoApplication {
         initProperties();
 
         System.out.println("JaCoMo stats");
-            
-        //presenceManager.show();
 
-        //Interpreter contactsCount = new ContactsCount(presenceManager);
-        //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
-        //System.out.println("ContactsCount: " + result.getContactsCount());
+    //presenceManager.show();
 
-        //        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
-        //
-        //        Histogram histogram = Histogram.hourHistogram;
-        //        Quantizer quantizer = Quantizer.hourQuantizer;
-        ////        Histogram histogram = Histogram.weekdayHistogram;
-        ////        Quantizer quantizer = Quantizer.weekdayQuantizer;
-        //
-        //        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
-        //        System.out.println("quantization sums:");
-        //        for (int i = 0; i < quantizationSums.length; i++) {
-        //            System.out.print(quantizationSums[i] + ", ");
-        //        }
-        //        System.out.println();
-        //
-        //        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
-        //        System.out.println("histogram:");
-        //        for (int i = 0; i < scaledHistogramResult.length; i++) {
-        //            System.out.print(scaledHistogramResult[i] + ", ");
-        //        }
-        //        System.out.println();
+    //Interpreter contactsCount = new ContactsCount(presenceManager);
+    //ContactsCount.Result result = (ContactsCount.Result)contactsCount.interpret();
+    //System.out.println("ContactsCount: " + result.getContactsCount());
+
+    //        Collection<IntervalList> intervalLists = presenceManager.getAllPresenceIntervals();
+    //
+    //        Histogram histogram = Histogram.hourHistogram;
+    //        Quantizer quantizer = Quantizer.hourQuantizer;
+    ////        Histogram histogram = Histogram.weekdayHistogram;
+    ////        Quantizer quantizer = Quantizer.weekdayQuantizer;
+    //
+    //        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
+    //        System.out.println("quantization sums:");
+    //        for (int i = 0; i < quantizationSums.length; i++) {
+    //            System.out.print(quantizationSums[i] + ", ");
+    //        }
+    //        System.out.println();
+    //
+    //        double[] scaledHistogramResult = histogram.computeScaledHistogram(quantizationSums);
+    //        System.out.println("histogram:");
+    //        for (int i = 0; i < scaledHistogramResult.length; i++) {
+    //            System.out.print(scaledHistogramResult[i] + ", ");
+    //        }
+    //        System.out.println();
 
     }
 
@@ -147,9 +144,11 @@ public class JacomoApplication {
         props.setProperty("jacomo.jabberServer", server);
         props.setProperty("jacomo.jabberUser", user);
         props.setProperty("jacomo.jabberPassword", passsword);
+        String dbName = new String();
         if (!server.isEmpty() && !user.isEmpty()) {
-            props.setProperty("jacomo.dbName", user + "_" + server);
+            dbName = user + "_" + server;
         }
+        props.setProperty("jacomo.dbName", dbName);
         System.setProperties(props);
     }
 
@@ -178,7 +177,6 @@ public class JacomoApplication {
         botApp.dispose();
         stopDatabase();
     }
-
     private DBBackend dbBackend;
     private BotApp botApp;
     private StatsApp statsApp;

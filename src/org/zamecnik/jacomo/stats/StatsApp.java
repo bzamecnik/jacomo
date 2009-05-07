@@ -17,6 +17,7 @@ public class StatsApp {
         hourQuantizer = Quantizer.hourQuantizer;
         weekdayHistogram = Histogram.weekdayHistogram;
         weekdayQuantizer = Quantizer.weekdayQuantizer;
+        reload();
     }
 
     public void reload() {

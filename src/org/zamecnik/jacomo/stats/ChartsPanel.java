@@ -1,6 +1,7 @@
 package org.zamecnik.jacomo.stats;
 
 import javax.swing.BoxLayout;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -12,25 +13,24 @@ import javax.swing.SwingWorker;
  */
 public class ChartsPanel extends JPanel {
     
-    public ChartsPanel() {
+    public ChartsPanel(JFrame frame) {
+        this.frame = frame;
         mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 
         mainPanel.add(new JLabel("count"));
 
         intervalPanel = new IntervalPanel();
-        mainPanel.add(intervalPanel);
+        //mainPanel.add(intervalPanel);
 
         hourHistogramPanel = new HistogramPanel();
-        //mainPanel.add(hourHistogramPanel);
+        mainPanel.add(hourHistogramPanel);
 
         weekdayHistogramPanel = new HistogramPanel();
-        //mainPanel.add(weekdayHistogramPanel);
-
-        add(new JScrollPane(mainPanel));
+        mainPanel.add(weekdayHistogramPanel);
     }
     
-    void reloadData() {
+    public void reloadData() {
         if (statsApp != null) {
             new SwingWorker<Void, Void>() {
                 public Void doInBackground() {
@@ -46,29 +46,33 @@ public class ChartsPanel extends JPanel {
     }
     
     void refreshCharts() {
-        hourHistogramPanel.setHistogram(statsApp.getHourHistogram());
-        weekdayHistogramPanel.setHistogram(statsApp.getWeekdayHistogram());
-        intervalPanel.setIntervals(statsApp.getIntervalsWithContactNames());
+        if (statsApp != null) {
+            hourHistogramPanel.setHistogram(statsApp.getHourHistogram());
+            weekdayHistogramPanel.setHistogram(statsApp.getWeekdayHistogram());
+            //intervalPanel.setIntervals(statsApp.getIntervalsWithContactNames());
+        }
     }
 
     void showPanels() {
-        if (statsApp == null) {
-            return;
+        if (statsApp != null) {
+            removeAll();
+            add(new JScrollPane(mainPanel));
+            frame.pack();
+            reloadData();
         }
-        removeAll();
-        add(new JScrollPane(mainPanel));
-        reloadData();
     }
 
     void hidePanels() {
         removeAll();
+        frame.pack();
     }
     
     private StatsApp statsApp;
-    JPanel mainPanel;
-    HistogramPanel hourHistogramPanel;
-    HistogramPanel weekdayHistogramPanel;
-    IntervalPanel intervalPanel;
+    private JFrame frame;
+    private JPanel mainPanel;
+    private HistogramPanel hourHistogramPanel;
+    private HistogramPanel weekdayHistogramPanel;
+    private IntervalPanel intervalPanel;
 
     /**
      * @param statsApp the statsApp to set
