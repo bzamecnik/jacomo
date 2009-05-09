@@ -1,9 +1,8 @@
 package org.zamecnik.jacomo.stats;
 
-import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingWorker;
 
 /**
@@ -14,19 +13,19 @@ public class ChartsPanel extends JPanel {
 
     public ChartsPanel(JFrame frame) {
         this.frame = frame;
-        mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        tabbedPane = new JTabbedPane();
+        //tabbedPane.setLayout(new BoxLayout(tabbedPane, BoxLayout.PAGE_AXIS));
 
         //mainPanel.add(new JLabel("count"));
 
         intervalPanel = new IntervalPanel();
-        mainPanel.add(intervalPanel);
+        tabbedPane.addTab("Intervals", intervalPanel);
 
         hourHistogramPanel = new HistogramPanel();
-        //mainPanel.add(hourHistogramPanel);
+        tabbedPane.addTab("Hour histogram", hourHistogramPanel);
 
         weekdayHistogramPanel = new HistogramPanel();
-        //mainPanel.add(weekdayHistogramPanel);
+        tabbedPane.addTab("Weekday histogram", weekdayHistogramPanel);
     }
 
     public void reloadData() {
@@ -50,16 +49,27 @@ public class ChartsPanel extends JPanel {
         if (statsApp != null) {
             hourHistogramPanel.setHistogram(statsApp.getHourHistogram());
             weekdayHistogramPanel.setHistogram(statsApp.getWeekdayHistogram());
-        //intervalPanel.setIntervals(statsApp.getIntervalsWithContactNames());
+            intervalPanel.setIntervals(statsApp.getIntervalsWithContactNames());
         }
     }
 
     void showPanels() {
         if (statsApp != null) {
-            removeAll();
-            add(new JScrollPane(mainPanel));
-            frame.pack();
-            reloadData();
+            new SwingWorker<Void, Void>() {
+
+                public Void doInBackground() {
+                    statsApp.reload();
+                    return null;
+                }
+
+                @Override
+                public void done() {
+                    refreshCharts();
+                    removeAll();
+                    add(tabbedPane);
+                    frame.pack();
+                }
+            }.execute();
         }
     }
 
@@ -81,7 +91,7 @@ public class ChartsPanel extends JPanel {
     }
     private StatsApp statsApp;
     private JFrame frame;
-    private JPanel mainPanel;
+    private JTabbedPane tabbedPane;
     private HistogramPanel hourHistogramPanel;
     private HistogramPanel weekdayHistogramPanel;
     private IntervalPanel intervalPanel;

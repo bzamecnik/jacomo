@@ -206,11 +206,11 @@ public class MainFrame extends JFrame {
 
         contentsPanel.add(infoPanel);
         chartsPanel = new ChartsPanel(this);
-        contentsPanel.add(chartsPanel);
+        contentsPanel.add(new JScrollPane(chartsPanel));
 //        chartPanel.add(new JLabel("intervals"));
 //        chartPanel.add(new JLabel("hour histogram"));
 //        chartPanel.add(new JLabel("weekday histogram"));
-        mainPane.add(new JScrollPane(contentsPanel), BorderLayout.CENTER);
+        mainPane.add(contentsPanel, BorderLayout.CENTER);
 
         pack();
         setVisible(true);

@@ -39,7 +39,7 @@ public class HistogramPanel extends JPanel {
                 PlotOrientation.VERTICAL, // orientation
                 true, // include legend
                 false, // tooltips
-                false);                  // urls
+                false); // urls
 
         XYPlot plot = (XYPlot) chart.getPlot();
         NumberAxis domainAxis = (NumberAxis) plot.getDomainAxis();

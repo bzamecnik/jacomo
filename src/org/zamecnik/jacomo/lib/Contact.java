@@ -34,7 +34,7 @@ public class Contact {
      * @param jid the jid to set
      */
     private void setJid(String jid) {
-        this.jid = jid;
+        this.jid = (jid != null) ? jid : "";
     }
     /**
      * @return the name
@@ -47,7 +47,7 @@ public class Contact {
      * @param name the name to set
      */
     public void setName(String name) {
-        this.name = name;
+        this.name = (name != null) ? name : "";
     }
 
     /**
