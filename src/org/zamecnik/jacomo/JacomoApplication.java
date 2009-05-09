@@ -6,15 +6,30 @@ import org.zamecnik.jacomo.lib.*;
 import org.zamecnik.jacomo.stats.*;
 
 /**
- *
- * @author Bohouš
+ * JaCoMo Application.
+ * This class act as a main application class. It holds a reference to bot and
+ * stats part (BotApplication and StatsApplication instances).
+ * The GUI is started from the main() function.
+ * JacomoApplication is a singleton class and reference to its only instance
+ * can be obtained by getInstance() function.
+ * <p>
+ * JacomoApplication instance hold a reference to database connection resource
+ * shared by the bot and stats part. After usage the should be disposed using
+ * dispose() member function to free the resources.
+ * @author Bohumir Zamecnik
  */
 public class JacomoApplication {
 
+    /**
+     * Private constructor. To be called by getInstance() only.
+     */
     private JacomoApplication() {
-        botApp = new BotApp();
     }
 
+    /**
+     * Get singleton instance. Create the instance on the first time calling.
+     * @return JacomoApplication singleton instance
+     */
     public static JacomoApplication getInstance() {
         if (singletonInstance == null) {
             singletonInstance = new JacomoApplication();
@@ -22,12 +37,16 @@ public class JacomoApplication {
         return singletonInstance;
     }
 
+    /**
+     * Main function.
+     * @param args
+     */
     public static void main(String[] args) {
-        // TODO: get stored properties from a file
         // TODO: get stored contact filter configuration
 
         PropertiesHelper.initProperties();
 
+        // run GUI in the Event Dispatching Thread
         SwingUtilities.invokeLater(new Runnable() {
 
             public void run() {
@@ -36,6 +55,11 @@ public class JacomoApplication {
         });
     }
 
+    /**
+     * Start database. Start the database backend, prepare bot application and
+     * stats application.
+     * @return true if it started ok and is prepared
+     */
     public boolean startDatabase() {
         try {
             dbBackend = new JavaDBBackend();
@@ -43,19 +67,28 @@ public class JacomoApplication {
             System.err.println("Can't connect to database: " + ex.getMessage());
             return false;
         }
-        botApp.setDbBackend(dbBackend);
-        statsApp = new StatsApp(dbBackend);
+        botApp = new BotApplication(dbBackend);
+        statsApp = new StatsApplication(dbBackend);
         return true;
     }
 
+    /**
+     * Stop database. Stop bot and stats application an then database.
+     */
     public void stopDatabase() {
         if (dbBackend != null) {
+            // Note: botApp is not actally disposed and can be used again
+            // botApp.dispose() should bear another name (clear() or sth)
+            botApp.dispose();
             dbBackend.dispose();
             dbBackend = null;
             statsApp = null;
         }
     }
 
+    /**
+     * Dispose the application and free resources.
+     */
     public void dispose() {
         System.out.println("JacomoApplication dispose()");
         botApp.dispose();
@@ -63,20 +96,26 @@ public class JacomoApplication {
     }
 
     /**
-     * @return the botApp
+     * Get bot application instance.
+     * @return bot application instance
      */
-    public BotApp getBotApp() {
+    public BotApplication getBotApp() {
         return botApp;
     }
 
     /**
-     * @return the statsApp
+     * Get stats application instance.
+     * @return stats application instance
      */
-    public StatsApp getStatsApp() {
+    public StatsApplication getStatsApp() {
         return statsApp;
     }
+    /** JacomoApplication singleton instance */
     private static JacomoApplication singletonInstance;
+    /** Database backend resource */
     private DBBackend dbBackend;
-    private BotApp botApp;
-    private StatsApp statsApp;
+    /** Bot application */
+    private BotApplication botApp;
+    /** Stats application */
+    private StatsApplication statsApp;
 }

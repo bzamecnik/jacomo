@@ -3,15 +3,27 @@ package org.zamecnik.jacomo.lib;
 import java.util.Date;
 
 /**
- *
- * @author Bohouš
+ * Contact presence status change.
+ * @see PresenceStatus
+ * @author Bohumir Zamecnik
  */
 public class PresenceChange {
+    /** Contact identification in the database. */
     private int contactId;
+    /** Date and time of change. */
     private Date time;
+    /** New presence status. */
     private PresenceStatus status;
+    /** New presence status text description. */
     private String statusDescription;
 
+    /**
+     * Presence change constructor.
+     * @param time Date and time of change
+     * @param status New presence status
+     * @param contactId Contact identification in the database
+     * @param statusDescription New presence status text description
+     */
     public PresenceChange(
             Date time,
             PresenceStatus status,
@@ -24,11 +36,18 @@ public class PresenceChange {
         setStatusDescription(statusDescription);
     }
 
+    /**
+     * Simple presence change constructor. There is not contact id and text
+     * description of status.
+     * @param time Date and time of change
+     * @param status New presence status
+     */
     public PresenceChange(Date time, PresenceStatus status) {
         this(time, status, 0, "");
     }
 
     /**
+     * Get contact id.
      * @return the contactId
      */
     public int getContactId() {
@@ -36,6 +55,7 @@ public class PresenceChange {
     }
 
     /**
+     * Set contact id.
      * @param contactId the contactId to set
      */
     private void setContactId(int contactId) {
@@ -43,6 +63,7 @@ public class PresenceChange {
     }
 
     /**
+     * Get time of change.
      * @return the time
      */
     public Date getTime() {
@@ -50,6 +71,7 @@ public class PresenceChange {
     }
 
     /**
+     * Set time of change.
      * @param time the time to set
      */
     private void setTime(Date time) {
@@ -57,6 +79,7 @@ public class PresenceChange {
     }
 
     /**
+     * Get presence status.
      * @return the status
      */
     public PresenceStatus getStatus() {
@@ -64,6 +87,7 @@ public class PresenceChange {
     }
 
     /**
+     * Set presence status.
      * @param status the status to set
      */
     private void setStatus(PresenceStatus status) {
@@ -71,6 +95,7 @@ public class PresenceChange {
     }
 
     /**
+     * Get presence status description.
      * @return the statusDescription
      */
     public String getStatusDescription() {
@@ -78,6 +103,7 @@ public class PresenceChange {
     }
 
     /**
+     * Get presence status description.
      * @param statusDescription the statusDescription to set
      */
     private void setStatusDescription(String statusDescription) {

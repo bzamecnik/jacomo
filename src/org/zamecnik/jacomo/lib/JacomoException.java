@@ -1,8 +1,8 @@
 package org.zamecnik.jacomo.lib;
 
 /**
- *
- * @author Bohouš
+ * General JaCoMo exception. Used to translate lower level exceptions.
+ * @author Bohumir Zamecnik
  */
 public class JacomoException extends Exception {
     public JacomoException() {

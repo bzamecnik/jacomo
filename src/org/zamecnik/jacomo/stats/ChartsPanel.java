@@ -7,7 +7,7 @@ import javax.swing.SwingWorker;
 
 /**
  *
- * @author Bohouš
+ * @author Bohumir Zamecnik
  */
 public class ChartsPanel extends JPanel {
 
@@ -81,7 +81,7 @@ public class ChartsPanel extends JPanel {
     /**
      * @param statsApp the statsApp to set
      */
-    public void setStatsApp(StatsApp statsApp) {
+    public void setStatsApp(StatsApplication statsApp) {
         this.statsApp = statsApp;
         if (statsApp != null) {
             showPanels();
@@ -89,7 +89,7 @@ public class ChartsPanel extends JPanel {
             hidePanels();
         }
     }
-    private StatsApp statsApp;
+    private StatsApplication statsApp;
     private JFrame frame;
     private JTabbedPane tabbedPane;
     private HistogramPanel hourHistogramPanel;

@@ -32,10 +32,13 @@ import org.jfree.data.xy.XYIntervalSeriesCollection;
 import org.zamecnik.jacomo.lib.Contact;
 
 /**
- *
- * @author Bohouš
+ * Interval panel.
+ * @author Bohumir Zamecnik
  */
 public class IntervalPanel extends JPanel {
+    /**
+     * IntervalPanel constructor.
+     */
     public IntervalPanel() {
         dataset = new XYIntervalSeriesCollection();
         createChart(dataset);
@@ -47,6 +50,10 @@ public class IntervalPanel extends JPanel {
         add(chartPanel);
     }
 
+    /**
+     * Create and configure a XYBarChart to show the intervals.
+     * @param dataset data container
+     */
     private void createChart(IntervalXYDataset dataset) {
         chart = ChartFactory.createXYBarChart("Online Intervals",
                 "Date", true, "Contact", dataset, PlotOrientation.HORIZONTAL,
@@ -84,7 +91,10 @@ public class IntervalPanel extends JPanel {
         ChartUtilities.applyCurrentTheme(chart);
     }
 
-    // map: contact name -> interval list
+    /**
+     * Update the chart with new intervals for each contact.
+     * @param intervals interval list with contact information
+     */
     public void setIntervals(Map<Contact, IntervalList> intervals) {
         System.out.println("IntervalPanel.setIntervals()");
         // TODO: contact names could be sorted

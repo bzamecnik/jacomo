@@ -15,11 +15,25 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 /**
- *
- * @author Bohouš
+ * JavaDB database backend. Implementation of DBBackend using an embedded
+ * JavaDB. The name of the database is given in the 'jacomo.dbName' system
+ * property. The path to the database is given in the 'jacomo.homeDir' system
+ * property.
+ * <p>
+ * The JavaDBBackend instance holds a database resource which has to be
+ * freed when it is no longer needed. See the dispose() member function.
+ * @author Bohumir Zamecnik
  */
 public class JavaDBBackend implements DBBackend {
 
+    /**
+     * Create new JavaDB database backend.
+     * Throw JacomoException if no database was specified or there is any
+     * problem with database.
+     * <p>
+     * Side effect: create directory for database.
+     * @throws org.zamecnik.jacomo.lib.JacomoException
+     */
     public JavaDBBackend() throws JacomoException {
         String dbName = System.getProperty("jacomo.dbName");
         if ((dbName == null) || dbName.isEmpty()) {
@@ -40,7 +54,6 @@ public class JavaDBBackend implements DBBackend {
 
         loadDriver();
         
-        dbConnection = null;
         try {
             // make a connection
             dbConnection = DriverManager.getConnection(strUrl);
@@ -99,6 +112,11 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
+    /**
+     * Load JavaDB driver.
+     * Throw JacomoException on any error.
+     * @throws org.zamecnik.jacomo.lib.JacomoException
+     */
     void loadDriver() throws JacomoException {
         try {
             Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
@@ -116,6 +134,9 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
+    /**
+     * Create database tables.
+     */
     void createTables() {
         // contact details
         String strCreateTableContacts =
@@ -158,17 +179,24 @@ public class JavaDBBackend implements DBBackend {
         //statement.executeBatch()
         } catch (SQLException ex) {
             ex.printStackTrace();
+            // TODO: what about throwing JacomoException?
         }
     }
 
-    public int enableContact(String contact, String name) {
-        System.out.println("enable contact: " + contact + " (" + name + ")");
+    /**
+     * Enable a contact. Create it or enable it if it was previously archived.
+     * @param contactJID contact Jid (Jabber Id)
+     * @param name contact name
+     * @return new contact database id
+     */
+    public int enableContact(String contactJID, String name) {
+        System.out.println("enable contact: " + contactJID + " (" + name + ")");
         // - look into Contacts table if we already have this contact
         int id = -1;
         boolean archived = false;
         try {
             stmtSelectContactByJid.clearParameters();
-            stmtSelectContactByJid.setString(1, contact);
+            stmtSelectContactByJid.setString(1, contactJID);
             ResultSet rs = stmtSelectContactByJid.executeQuery();
             if (rs.next()) {
                 id = rs.getInt(1);
@@ -189,7 +217,7 @@ public class JavaDBBackend implements DBBackend {
                 }
                 //   - no: insert the contact into the table and get the generated 'id'
                 stmtInsertContact.clearParameters();
-                stmtInsertContact.setString(1, contact);
+                stmtInsertContact.setString(1, contactJID);
                 stmtInsertContact.setString(2, name);
                 stmtInsertContact.setString(3, "N");
                 stmtInsertContact.executeUpdate();
@@ -204,9 +232,13 @@ public class JavaDBBackend implements DBBackend {
         return id;
     }
 
-    public void disableContact(String contact) {
+    /**
+     * Disable a contact. Don't delete it but rather set it as archived.
+     * @param contactJID contact Jid (Jabber Id)
+     */
+    public void disableContact(String contactJID) {
         // look into Contacts table if the contact is already there
-        int id = getContactId(contact);
+        int id = getContactId(contactJID);
         System.out.println("id: " + id);
         if (id != -1) {
             // - yes: set 'archived' to 'Y'
@@ -223,12 +255,20 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
+    /**
+     * Change contact presence status. Do nothing if there is no such a contact.
+     * @param contactJID contact Jid (Jabber Id)
+     * @param date date and time of change
+     * @param status new presence status
+     * @param statusDescription presence status description
+     */
     public void changeContactPresence(
-            String contact,
+            String contactJID,
             Date date,
             PresenceStatus status,
-            String statusDesctiption) {
-        int id = getContactId(contact);
+            String statusDescription) {
+        int id = getContactId(contactJID);
+        // TODO: what about archived contacts?
         System.out.println("id: " + id);
         if (id != -1) {
             try {
@@ -237,7 +277,7 @@ public class JavaDBBackend implements DBBackend {
                 stmtInsertContactPresenceChange.setTimestamp(2, new Timestamp(date.getTime()));
                 stmtInsertContactPresenceChange.setString(3, status.isOnline(status) ? "Y" : "N");
                 stmtInsertContactPresenceChange.setString(4, status.toString());
-                stmtInsertContactPresenceChange.setString(5, statusDesctiption);
+                stmtInsertContactPresenceChange.setString(5, statusDescription);
                 stmtInsertContactPresenceChange.executeUpdate();
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -245,6 +285,10 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
+    /**
+     * Change bot presence status.
+     * @param online true if online
+     */
     public void changeBotPresence(boolean online) {
         Date date = Calendar.getInstance().getTime();
         System.out.println("change in bot presence: " +
@@ -252,7 +296,8 @@ public class JavaDBBackend implements DBBackend {
                 + DateFormat.getDateTimeInstance().format(date));
         try {
             stmtInsertBotPresenceChange.clearParameters();
-            stmtInsertBotPresenceChange.setTimestamp(1, new Timestamp(date.getTime()));
+            stmtInsertBotPresenceChange.setTimestamp(1,
+                    new Timestamp(date.getTime()));
             stmtInsertBotPresenceChange.setString(2, online ? "Y" : "N");
             stmtInsertBotPresenceChange.executeUpdate();
         } catch (SQLException ex) {
@@ -260,8 +305,13 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
-    public void updateContactName(String contact, String name) {
-        int id = getContactId(contact);
+    /**
+     * Update contact name.
+     * @param contactJID contact Jabber Id
+     * @param name new contact name
+     */
+    public void updateContactName(String contactJID, String name) {
+        int id = getContactId(contactJID);
         if (id != -1) {
             try {
                 stmtUpdateContactName.clearParameters();
@@ -274,6 +324,10 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
+    /**
+     * Get a list of contacts. Exclude archived ones.
+     * @return list of contacts
+     */
     public List<Contact> getContactsList() {
         List<Contact> contacts = new ArrayList<Contact>();
         try {
@@ -293,8 +347,8 @@ public class JavaDBBackend implements DBBackend {
     }
 
     /**
-     * Get alist of presence changes of the bot itself.
-     * @return
+     * Get a list of presence changes of the bot itself.
+     * @return list of bot presence changes
      */
     public List<PresenceChange> getBotPresenceChangesList() {
         List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
@@ -315,7 +369,7 @@ public class JavaDBBackend implements DBBackend {
 
     /**
      * Get a list of presence changes of all the contacts.
-     * @return
+     * @return list of contact presence changes
      */
     public List<PresenceChange> getPresenceChangesList() {
         List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
@@ -338,7 +392,7 @@ public class JavaDBBackend implements DBBackend {
 
     /**
      * Get a list of presence changes of a specified contact.
-     * @return
+     * @return list of presence changes
      */
     public List<PresenceChange> getContactPresenceChangesList(int contactId) {
         List<PresenceChange> presenceChanges = new ArrayList<PresenceChange>();
@@ -360,6 +414,41 @@ public class JavaDBBackend implements DBBackend {
         return presenceChanges;
     }
 
+    /**
+     * Get contact database id by its Jabber Id excluding archived contacts.
+     * @param contactJID contact Jaber Id
+     * @return contact database id
+     */
+    int getContactId(String contactJID) {
+        return getContactId(contactJID, false);
+    }
+
+    /**
+     * Get contact database id by its Jabber Id.
+     * @param contactJID contact Jaber Id
+     * @param includeArchived include archived contacts to search
+     * @return contact database id
+     */
+    int getContactId(String contactJID, boolean includeArchived) {
+        int id = -1;
+        try {
+            stmtSelectContactByJid.clearParameters();
+            stmtSelectContactByJid.setString(1, contactJID);
+            ResultSet rs = stmtSelectContactByJid.executeQuery();
+            if (rs.next()) {
+                if (includeArchived || rs.getString(2).equals("Y")) {
+                    id = rs.getInt(1);
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return id;
+    }
+
+    /**
+     * Dispose bot application. Free the database connection resource.
+     */
     public void dispose() {
         System.out.println("JavaDBBackend dispose()");
         try {
@@ -369,20 +458,8 @@ public class JavaDBBackend implements DBBackend {
         }
     }
 
-    int getContactId(String contact) {
-        int id = -1;
-        try {
-            stmtSelectContactByJid.clearParameters();
-            stmtSelectContactByJid.setString(1, contact);
-            ResultSet rs = stmtSelectContactByJid.executeQuery();
-            if (rs.next()) {
-                id = rs.getInt(1);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return id;
-    }
+    // Database connection resource, needs to be freed after usage.
+    // See dispose() member function.
     Connection dbConnection;
     PreparedStatement stmtInsertContact;
     PreparedStatement stmtInsertContactPresenceChange;

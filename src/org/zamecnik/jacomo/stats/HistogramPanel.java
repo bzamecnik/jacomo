@@ -14,11 +14,14 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 /**
- *
- * @author Bohouš
+ * Histogram panel.
+ * @author Bohumir Zamecnik
  */
 public class HistogramPanel extends JPanel {
 
+    /**
+     * HistogramPanel constructor.
+     */
     public HistogramPanel() {
         //setHistogram(histogram);
         series = new XYSeries("online users histogram");
@@ -29,7 +32,13 @@ public class HistogramPanel extends JPanel {
         add(new ChartPanel(chart));
     }
 
+    /**
+     * Create and configure a XYBarChart for the histogram.
+     * @param dataset data container
+     * @return the chart created
+     */
     private static JFreeChart createChart(IntervalXYDataset dataset) {
+        // TODO: make the labels configurable
         JFreeChart chart = ChartFactory.createXYBarChart(
                 "Histogram", // chart title
                 "Hour", // domain axis label
@@ -49,6 +58,10 @@ public class HistogramPanel extends JPanel {
         return chart;
     }
 
+    /**
+     * Set a new histogram and update the chart.
+     * @param histogram histogram to set
+     */
     public void setHistogram(double[] histogram) {
         XYSeries updatedSeries = new XYSeries("online users histogram");
         for (int i = 0; i < histogram.length; i++) {

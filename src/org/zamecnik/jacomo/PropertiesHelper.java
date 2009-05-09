@@ -8,25 +8,43 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- *
- * @author Bohouš
+ * Properties helper. A helper class used for properties handling:
+ * setting, initializing, loading from and saving to a config file.
+ * @author Bohumir Zamecnik
  */
 public class PropertiesHelper {
 
+    /**
+     * Initialize properties. Set <code>jacomo.homeDir</code> property and load
+     * properties from a config file.
+     */
     public static void initProperties() {
         String homeDir = new File(System.getProperty("user.home", ".") + File.separator + ".jacomo").getPath();
         System.setProperty("jacomo.homeDir", homeDir);
         loadProperties();
     }
 
+    /**
+     * Set Jabber specific properties. Also set a proper database name.
+     * @param server Jabber server set to jacomo.jabberServer property
+     * @param user Jabber account user name set to jacomo.jabberUser property
+     * @param password Jabber account password set to jacomo.jabberPassword property
+     */
     public static void setJabberProperties(
-            String server, String user, String passsword) {
+            String server, String user, String password) {
         System.setProperty("jacomo.jabberServer", server);
         System.setProperty("jacomo.jabberUser", user);
-        System.setProperty("jacomo.jabberPassword", passsword);
+        System.setProperty("jacomo.jabberPassword", password);
         setDBName(server, user);
     }
 
+    /**
+     * Compute a database name and set it as a property.
+     * The database name is in form "USER_SERVER", eg. john.doe_jabber.com
+     * and is set to jacomo.dbName property.
+     * @param server Jabber server
+     * @param user Jabber account user name
+     */
     static void setDBName(String server, String user) {
         String dbName = new String();
         if (!server.isEmpty() && !user.isEmpty()) {
@@ -35,6 +53,12 @@ public class PropertiesHelper {
         System.setProperty("jacomo.dbName", dbName);
     }
 
+    /**
+     * Load properties from a config file.
+     * The name of config file is specified in <code>CONFIG_FILE</code> and the
+     * directory is specified in the <code>jacomo.homeDir</code> property.
+     * If the file doesn't exist no properties are loaded.
+     */
     public static void loadProperties() {
         // load properties from a file
         Properties loadedProps = new Properties();
@@ -56,6 +80,12 @@ public class PropertiesHelper {
                 System.getProperty("jacomo.jabberUser",""));
     }
 
+    /**
+     * Save properties to a config file.
+     * The name of config file is specified in <code>CONFIG_FILE</code> and the
+     * directory is specified in the <code>jacomo.homeDir</code> property.
+     * The file is automatically created if it doesn't exist.
+     */
     public static void saveProperties() {
         // save properties to a file
         Properties props = new Properties();
@@ -78,5 +108,6 @@ public class PropertiesHelper {
         }
     }
 
+    /** Config file name. */
     private static final String CONFIG_FILE = "config.properties";
 }

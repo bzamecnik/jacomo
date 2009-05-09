@@ -11,33 +11,39 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
 
 /**
- * Logger act as a Jabber bot which logs the contacts' presence changes.
+ * BotApplication act as a Jabber bot which logs the contacts' presence changes.
  * It uses Smack library for Jabber stuff. To work properly, it must connect to
  * two backends at first: a database and a Jabber account. Then it is possible
  * to start logging. It gets presence change events from the Jabber server and
- * stores it into the database. It is possible to use a filter to decide which
+ * stores it into the database.
+ * <p>
+ * It is possible to use a filter to decide which
  * contacts to exclude.
- *
- * A Logger instance holds a XMPPConnection resource and also an instance
- * of ContactFilter.
- *
- * Usage:
- *
- *   * Startup procedure:
- *     * call login() to connect to Jabber server
- *     * call start() to start logging
- *   * Shutdown procedure:
- *     * call stop() to stop logging
- *     * call logout() to disconnect to Jabber server
- *
- * It is possible to pause loggin without leaving Jabber server.
- *
- * @author Bohouš
+ * <p>
+ * A BotApplication instance holds a XMPPConnection resource and also an
+ * instance of ContactFilter.
+ * <p>
+ * You can start/stop jabber connection and logging separately. So it is
+ * possible to pause logging without leaving Jabber server.
+ * <p>
+ * <ul>
+ *   <li>Startup procedure:</li>
+ *   <ul>
+ *     <li>call login() to connect to Jabber server</li>
+ *     <li>call start() to start logging</li>
+ *   </ul>
+ *   <li>Shutdown procedure:</li>
+ *   <ul>
+ *     <li>call stop() to stop logging</li>
+ *     <li>call logout() to disconnect to Jabber server</li>
+ *   </ul>
+ * </ul>
+ * @author Bohumir Zamecnik
  */
-public class Logger {
+public class BotApplication {
 
-    public Logger(DBBackend dbBackend) throws JacomoException {
-        System.out.println("Logger()");
+    public BotApplication(DBBackend dbBackend) {
+        System.out.println("BotApplication()");
         state = LoggerState.NOT_PREPARED;
 
         contactsCache = new java.util.HashSet<String>();
@@ -48,13 +54,6 @@ public class Logger {
         contactFilter.addBlacklistKeyword("live@jabbim.cz"); // whole JID
 
         this.dbBackend = dbBackend;
-
-        String jabberServer = System.getProperty("jacomo.jabberServer");
-        System.out.println("jabber server: " + jabberServer);
-        if (jabberServer == null) {
-            throw new JacomoException("jacomo.jabberServer is not specified.");
-        }
-        jabberConnection = new XMPPConnection(jabberServer);
 
         rosterListener = new RosterListener() {
 
@@ -98,7 +97,7 @@ public class Logger {
      * Start logging.
      */
     public void start() {
-        System.out.println("Logger.start()");
+        System.out.println("BotApplication.start()");
         if (state == LoggerState.PREPARED) {
             registerJabberHandlers();
             state = LoggerState.RUNNING;
@@ -120,7 +119,7 @@ public class Logger {
      * Stop logging.
      */
     public void stop() {
-        System.out.println("Logger.stop()");
+        System.out.println("BotApplication.stop()");
         if (state == LoggerState.RUNNING) {
             unregisterJabberHandlers();
             state = LoggerState.PREPARED;
@@ -142,19 +141,30 @@ public class Logger {
 
     /**
      * Start a Jabber session.
+     * @return true if succesfully connected to Jabber server
      */
-    public void login() throws JacomoException {
-        System.out.println("Logger.login()");
+    public boolean login() {
+        System.out.println("BotApplication.login()");
         if (state != LoggerState.NOT_PREPARED) {
-            return;
+            return false;
         }
+        String jabberServer = System.getProperty("jacomo.jabberServer");
+        System.out.println("jabber server: " + jabberServer);
+        if (jabberServer == null) {
+            //throw new JacomoException("jacomo.jabberServer is not specified.");
+            System.err.println("jacomo.jabberServer is not specified.");
+            return false;
+        }
+        jabberConnection = new XMPPConnection(jabberServer);
         try {
             jabberConnection.connect();
             jabberConnection.login(
                     System.getProperty("jacomo.jabberUser"),
                     System.getProperty("jacomo.jabberPassword"));
         } catch (XMPPException ex) {
-            throw new JacomoException(ex);
+            //throw new JacomoException(ex);
+            System.err.println("Can't log in to the jabber server: " + ex.getMessage());
+            return false;
         }
 
         // Synchronize contacts in roster with contacts in the database.
@@ -185,13 +195,14 @@ public class Logger {
         }
 
         state = LoggerState.PREPARED;
+        return true;
     }
 
     /**
      * Stop a Jabber session.
      */
     public void logout() {
-        System.out.println("Logger.logout()");
+        System.out.println("BotApplication.logout()");
         if (state == LoggerState.RUNNING) {
             stop();
         }
@@ -199,6 +210,14 @@ public class Logger {
             jabberConnection.disconnect();
             state = LoggerState.NOT_PREPARED;
         }
+    }
+
+    /**
+     * Set database backend.
+     * @param dbBackend the database backend to set
+     */
+    public void setDbBackend(DBBackend dbBackend) {
+        this.dbBackend = dbBackend;
     }
 
     /**
@@ -284,32 +303,49 @@ public class Logger {
         roster.removeRosterListener(rosterListener);
     }
 
+    /**
+     * Stop logging and close Jabber connection.
+     * However, the bot application can be used again.
+     */
     public void dispose() {
         stop();
         logout();
     }
 
     /**
-     * Strip the resource part from a JID.
+     * Strip the resource part from a Jabber Id.
+     * @param jid Jabber Id
+     * @return Jid without the resource part
      */
     String stripJID(String jid) {
         return jid.replaceFirst("/.*", "");
     }
 
+    /**
+     * Bot application logger state.
+     */
     public enum LoggerState {
 
+        /** Connected to Jabber and logging. */
         RUNNING,
+        /** Connected to Jabber and prepared to log. */
         PREPARED,
+        /** Not connected to Jabber and not prepared to log. */
         NOT_PREPARED,
         //ERROR
     }
+    /** Database backend. The resource is not owned here. */
     DBBackend dbBackend;
-    XMPPConnection jabberConnection; // Jabber backend
+    /** Jabber backend. The resource is owned here. */
+    XMPPConnection jabberConnection;
     //java.util.Map<Integer, Contact> contactsCache;
     //java.util.Set<Contact> contactsCache;
-    // a cache of contacts that haven't been archived (ie. disabled)
+    /** A cache of contacts that haven't been archived (ie. disabled). */
     Set<String> contactsCache;
+    /** Current logger state. */
     LoggerState state;
+    /** Event handler for Jabber roster. */
     RosterListener rosterListener;
+    /** Filter for excluding unwanted contacts from being logged. */
     ContactFilter contactFilter;
 }

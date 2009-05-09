@@ -18,10 +18,18 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 /**
+ * Configure dialog. A dialog for setting some configuration data. Currently
+ * used to configure Jabber account information. If the dialog was confirmend
+ * (isConfirmed() == true) the data can be retrieved using following functions:
+ * getJabberServer(), getJabberUsername(), getJabberPassword().
  *
- * @author Bohouš
+ * @author Bohumir Zamecnik
  */
 public class ConfigDialog extends JDialog implements ActionListener {
+    /**
+     * ConfigDialog contructor.
+     * @param frame parent Frame which will own this dialog
+     */
     public ConfigDialog(Frame frame) {
         super(frame, "Configuration", true);
 
@@ -62,7 +70,12 @@ public class ConfigDialog extends JDialog implements ActionListener {
         contentPane.add(buttonPane, BorderLayout.PAGE_END);
     }
 
+    /**
+     * Dialog button click handler.
+     * @param e action event
+     */
     public void actionPerformed(ActionEvent e) {
+        // OK button clicked, set the
         if ("OK".equals(e.getActionCommand())) {
             confirmed = true;
             jabberServer = jabberServerTextField.getText();
@@ -82,26 +95,36 @@ public class ConfigDialog extends JDialog implements ActionListener {
     private boolean confirmed;
 
     /**
-     * @return the jabberServer
+     * Get Jabber server.
+     * @return jabber server
      */
     public String getJabberServer() {
         return jabberServer;
     }
 
     /**
-     * @return the jabberUsername
+     * Get Jabber username.
+     * @return jabber username
      */
     public String getJabberUsername() {
         return jabberUsername;
     }
 
     /**
-     * @return the jabberPassword
+     * Get Jabber password. Char array is returned instead of String for
+     * security reasons (it can be cleaned).
+     * @return jabber password
      */
     public char[] getJabberPassword() {
+        // Security note (TODO):
+        // There is still a hole in setting default value for password and
+        // in saving the password to a config file on disk.
         return (jabberPassword != null) ? jabberPassword : new char[0];
     }
 
+    /**
+     * Clear Jabber password configured using the dialog.
+     */
     public void clearJabberPassword() {
         if (jabberPassword != null) {
             Arrays.fill(jabberPassword, '0');
@@ -109,7 +132,9 @@ public class ConfigDialog extends JDialog implements ActionListener {
     }
 
     /**
-     * @return the confirmed
+     * Check if the dialog was confirmed and getting the data configured is
+     * possible.
+     * @return true if it was confirmed
      */
     public boolean isConfirmed() {
         return confirmed;

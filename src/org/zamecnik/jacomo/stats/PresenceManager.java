@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 
 /**
  *
- * @author Bohouš
+ * @author Bohumir Zamecnik
  */
 public class PresenceManager {
 

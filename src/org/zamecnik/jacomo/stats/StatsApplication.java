@@ -7,10 +7,10 @@ import org.zamecnik.jacomo.lib.DBBackend;
 
 /**
  *
- * @author Bohouš
+ * @author Bohumir Zamecnik
  */
-public class StatsApp {
-    public StatsApp(DBBackend dbBackend) {
+public class StatsApplication {
+    public StatsApplication(DBBackend dbBackend) {
         presenceManager = new PresenceManager(dbBackend);
         presenceManager.refresh();
         hourHistogram = Histogram.hourHistogram;

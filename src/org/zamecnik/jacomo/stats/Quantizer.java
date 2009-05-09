@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  *
- * @author Bohouš
+ * @author Bohumir Zamecnik
  */
 public class Quantizer {
 

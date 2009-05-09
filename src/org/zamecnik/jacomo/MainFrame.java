@@ -18,15 +18,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingWorker;
-import org.zamecnik.jacomo.bot.BotApp;
+import org.zamecnik.jacomo.bot.BotApplication;
 import org.zamecnik.jacomo.stats.ChartsPanel;
 
 /**
- *
- * @author Bohouš
+ * Main JaCoMo application frame.
+ * @author Bohumir Zamecnik
  */
 public class MainFrame extends JFrame {
 
+    /**
+     * MainFrame constructor.
+     */
     public MainFrame() {
         setDefaultLookAndFeelDecorated(true);
         setTitle("JaCoMo");
@@ -50,6 +53,7 @@ public class MainFrame extends JFrame {
         configButton = new JButton("Configure");
         configButton.addActionListener(new ActionListener() {
 
+            // use configuration dialog to get Jabber config data
             public void actionPerformed(ActionEvent e) {
                 ConfigDialog dialog = new ConfigDialog(MainFrame.this);
                 dialog.pack();
@@ -70,18 +74,20 @@ public class MainFrame extends JFrame {
 
             public void actionPerformed(ActionEvent e) {
                 final JacomoApplication app = JacomoApplication.getInstance();
+                // database button - connect/disconnect to database
                 if ("database".equals(e.getActionCommand())) {
                     final boolean selected = databaseButton.isSelected();
                     configButton.setEnabled(!selected);
-                    // connect/disconnect to database
                     // TODO: support progress - print status changes somewhere
                     if (selected) {
                         new SwingWorker<Boolean, Void>() {
 
+                            // run in new thread
                             public Boolean doInBackground() {
                                 return app.startDatabase();
                             }
 
+                            // run in GUI thread after doInBackground() finished
                             @Override
                             public void done() {
                                 boolean databaseStarted = false;
@@ -105,22 +111,24 @@ public class MainFrame extends JFrame {
                     } else {
                         jabberButton.setEnabled(false);
                         refreshButton.setEnabled(false);
-                        app.stopDatabase(); // TODO: in SwingWorker
+                        app.stopDatabase(); // TODO: run in SwingWorker
                         chartsPanel.setStatsApp(null);
                     }
+                // jabber button - connect/disconnect to jabber
                 } else if ("jabber".equals(e.getActionCommand())) {
                     final boolean selected = jabberButton.isSelected();
                     databaseButton.setEnabled(!selected);
-                    // connect/disconnect to jabber here
                     // TODO: support progress - print status changes somewhere
-                    final BotApp botApp = app.getBotApp();
+                    final BotApplication botApp = app.getBotApp();
                     if (selected) {
                         new SwingWorker<Boolean, Void>() {
 
+                            // run in a new thread
                             public Boolean doInBackground() {
-                                return botApp.startJabber();
+                                return botApp.login();
                             }
 
+                            // run in GUI thread after doInBackground() finished
                             @Override
                             public void done() {
                                 boolean jabberStarted = false;
@@ -138,18 +146,18 @@ public class MainFrame extends JFrame {
                         }.execute();
                     } else {
                         loggerButton.setEnabled(false);
-                        botApp.stopJabber(); // TODO: in SwingWorker
+                        botApp.logout(); // TODO: in SwingWorker
                     }
+                // logger button - start/stop logger
                 } else if ("logger".equals(e.getActionCommand())) {
                     boolean selected = loggerButton.isSelected();
                     jabberButton.setEnabled(!selected);
-                    // start/stop logger here
                     // TODO: use SwingWorker
-                    BotApp botApp = app.getBotApp();
+                    BotApplication botApp = app.getBotApp();
                     if (selected) {
-                        botApp.startLogging();
+                        botApp.login();
                     } else {
-                        botApp.stopLogging();
+                        botApp.logout();
                     }
                 }
             }
@@ -174,6 +182,7 @@ public class MainFrame extends JFrame {
         refreshButton.setEnabled(false);
         refreshButton.addActionListener(new ActionListener() {
 
+            // reload charts
             public void actionPerformed(ActionEvent e) {
                 // refresh charts
                 chartsPanel.reloadData();
