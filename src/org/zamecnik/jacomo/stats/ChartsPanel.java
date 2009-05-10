@@ -6,11 +6,18 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingWorker;
 
 /**
- *
+ * Panel with statistic charts. It uses StatsApp to get the data. The charts
+ * are only show when there are the data, otherwise they are hidden.
  * @author Bohumir Zamecnik
  */
 public class ChartsPanel extends JPanel {
 
+    /**
+     * ChartsPanel constructor. The charts are initially hidden. The parent
+     * frame is needed to be resized using pack() funcion after GUI
+     * modifications.
+     * @param frame parent frame
+     */
     public ChartsPanel(JFrame frame) {
         this.frame = frame;
         tabbedPane = new JTabbedPane();
@@ -28,6 +35,11 @@ public class ChartsPanel extends JPanel {
         tabbedPane.addTab("Weekday histogram", weekdayHistogramPanel);
     }
 
+    /**
+     * Get new data and redraw charts. Reloading the data could be a longer
+     * operation (it needs use the database), so it is done in a separate
+     * thread.
+     */
     public void reloadData() {
         if (statsApp != null) {
             new SwingWorker<Void, Void>() {
@@ -53,6 +65,12 @@ public class ChartsPanel extends JPanel {
         }
     }
 
+    /**
+     * Get new data and show charts. Reloading the data could be a longer
+     * operation (it needs use the database), so it is done in a separate
+     * thread. This is similar to realoadData() but it does something different
+     * in done() function, so the code has been separated.
+     */
     void showPanels() {
         if (statsApp != null) {
             new SwingWorker<Void, Void>() {
@@ -73,13 +91,18 @@ public class ChartsPanel extends JPanel {
         }
     }
 
+    /**
+     * Hide the chart panels.
+     */
     void hidePanels() {
         removeAll();
         frame.pack();
     }
 
     /**
-     * @param statsApp the statsApp to set
+     * Set the stats application. Show panels on a non-null statsApp,
+     * hide panels otherwise.
+     * @param statsApp the stats application to set
      */
     public void setStatsApp(StatsApplication statsApp) {
         this.statsApp = statsApp;
@@ -89,10 +112,15 @@ public class ChartsPanel extends JPanel {
             hidePanels();
         }
     }
+    /** Stats application. Can be null. */
     private StatsApplication statsApp;
+    /** Parent frame. */
     private JFrame frame;
     private JTabbedPane tabbedPane;
+    /** Hour histogram panel. */
     private HistogramPanel hourHistogramPanel;
+    /** Weekday histogram panel. */
     private HistogramPanel weekdayHistogramPanel;
+    /** Presence intervals panel. */
     private IntervalPanel intervalPanel;
 }

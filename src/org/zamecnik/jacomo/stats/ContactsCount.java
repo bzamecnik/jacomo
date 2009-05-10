@@ -20,7 +20,7 @@ public class ContactsCount {
      * @return number of active contacts
      */
     public int getContactsCount() {
-        return presenceManager.getContacts().size();
+        return presenceManager.getContactsCount();
     }
     PresenceManager presenceManager;
 }

@@ -8,12 +8,18 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Sampler turns presence time intervals into values in discrete time blocks.
  * @author Bohumir Zamecnik
  */
-public class Quantizer {
+public class Sampler {
 
-    public Quantizer(
+    /**
+     * Sampler constructor. A custom function which computes the date and time
+     * when the sample starts can be given.
+     * @param sampleSize the size of time sample
+     * @param startSampleDateFunc function giving first sample alignment
+     */
+    public Sampler(
             long sampleSize,
             StartSampleDateFunc startSampleDateFunc) {
         this.sampleSize = sampleSize;
@@ -22,9 +28,9 @@ public class Quantizer {
 
 
     static {
-        hourQuantizer = new Quantizer(
+        hourSampler = new Sampler(
                 3600000, // 1 hour in milliseconds
-                new Quantizer.StartSampleDateFunc() {
+                new Sampler.StartSampleDateFunc() {
 
             public Calendar computeStartSampleDate(Calendar firstDate) {
                 firstDate.set(Calendar.AM_PM, Calendar.AM);
@@ -35,9 +41,9 @@ public class Quantizer {
                 return firstDate;
             }
         });
-        weekdayQuantizer = new Quantizer(
+        weekdaySampler = new Sampler(
                 86400000, // 1 day in milliseconds
-                new Quantizer.StartSampleDateFunc() {
+                new Sampler.StartSampleDateFunc() {
 
             public Calendar computeStartSampleDate(Calendar firstDate) {
                 firstDate.set(Calendar.DAY_OF_WEEK,
@@ -52,7 +58,7 @@ public class Quantizer {
         });
     }
 
-//    public boolean[][] quantize(Collection<IntervalList> intervalLists) {
+//    public boolean[][] sample(Collection<IntervalList> intervalLists) {
 //        // - get list of time points from each interval list
 //        // - correct end points to close the open intervals at 'now' time
 //        // - find out lowest and highest point of all interval lists
@@ -61,29 +67,43 @@ public class Quantizer {
 //        //   - for each interval list:
 //        //     - store sample status
 //    }
-    public int[] sum(boolean[][] quantized) {
-        int[] summed = new int[quantized.length];
-        for (int sample = 0; sample < quantized.length; sample++) {
-            boolean[] sampleValues = quantized[sample]; // a possible optimization
-            summed[sample] = 0;
-            for (int user = 0; user < quantized.length; user++) {
-                if (sampleValues[user]) {
-                    summed[sample]++;
-                }
-            }
-        }
-        return summed;
-    }
 
-    public int[] quantizeAndSum(Collection<IntervalList> intervalLists) {
+//    /**
+//     * Sum sets of sampled values from multiple contacts.
+//     * @param sampled first index - sample, second index - contact
+//     * @return summed samples
+//     */
+//    public int[] sum(boolean[][] sampled) {
+//        int[] summed = new int[sampled.length];
+//        for (int sample = 0; sample < sampled.length; sample++) {
+//            boolean[] sampleValues = sampled[sample]; // a possible optimization
+//            summed[sample] = 0;
+//            for (int user = 0; user < sampled.length; user++) {
+//                if (sampleValues[user]) {
+//                    summed[sample]++;
+//                }
+//            }
+//        }
+//        return summed;
+//    }
+
+    /**
+     * Sample and sum the presence interval lists. Divide the intervals using
+     * discrete time blocks and sample the presence value (currently
+     * online/offline). Whenever the interval touches a part of the block the
+     * whole block is treated as being online (a kind of maximum metric). We get
+     * lists of binary-valued samples of equal length. The next step is to
+     * sum up the lists to get numbers of online contacts in each sample.
+     * @param intervalLists presence intervals for each contact
+     * @return samples with number of online contacts in each one
+     */
+    public int[] sampleAndSum(Collection<IntervalList> intervalLists) {
         // simple but not very efficient method:
-        //return sum(quantize(intervalLists));
+        //return sum(sample(intervalLists));
 
-        // quantize and sum at once
-        return quantizeAndSum(preparePoints(intervalLists));
-    }
+        // sample and sum at once
+        List<List<Date>> points = preparePoints(intervalLists);
 
-    int[] quantizeAndSum(List<List<Date>> points) {
         // find out minimum and maximum points of all interval lists
         Date firstDate = new Date();
         Date lastDate = new Date(0);
@@ -127,7 +147,13 @@ public class Quantizer {
 
         return summedSamples;
     }
-
+    
+    /**
+     * Prepare time points. Convert from collection of interval lists (for each
+     * contact) to a list of list of dates.
+     * @param intervalLists interval lists for contacts
+     * @return outer list - contacts, inner list - time points
+     */
     List<List<Date>> preparePoints(Collection<IntervalList> intervalLists) {
         Calendar cal = Calendar.getInstance();
         Date endPoint = cal.getTime();
@@ -140,11 +166,23 @@ public class Quantizer {
         return points;
     }
 
-    long roundTimePoint(long seconds, boolean ceiling) {
-        double tmp = (double) seconds / sampleSize;
+    /**
+     * Round time point to a sample border.
+     * @param milliseconds time point in milliseconds since 1970/1/1 0:00:00
+     * @param ceiling true - round up (ceiling), false - round down (floor)
+     * @return rounded time point in milliseconds
+     */
+    long roundTimePoint(long milliseconds, boolean ceiling) {
+        double tmp = (double) milliseconds / sampleSize;
         return (long) (ceiling ? Math.ceil(tmp) : Math.floor(tmp));
     }
 
+    /**
+     * A function which computes the alignment of the first sample.
+     * Wrapper over startSampleDateFunc to use Date instead of Calendar.
+     * @param firstDate date inside the first sample
+     * @return aligned sample start
+     */
     Date computeStartSampleDate(Date firstDate) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(firstDate);
@@ -152,12 +190,23 @@ public class Quantizer {
         return cal.getTime();
     }
 
+    /**
+     * A function which computes the alignment of the first sample.
+     */
     public interface StartSampleDateFunc {
 
+        /**
+         * A function which computes the alignment of the first sample.
+         * @param firstDate date inside the first sample
+         * @return aligned sample start
+         */
         public Calendar computeStartSampleDate(Calendar firstDate);
     }
+    /** Size of sample, in milliseconds. */
     long sampleSize;
     StartSampleDateFunc startSampleDateFunc;
-    public static final Quantizer hourQuantizer;
-    public static final Quantizer weekdayQuantizer;
+    /** Prepared hour sampler aligned to start of an hour. */
+    public static final Sampler hourSampler;
+    /** Prepared day sampler aligned to the first day of week. */
+    public static final Sampler weekdaySampler;
 }

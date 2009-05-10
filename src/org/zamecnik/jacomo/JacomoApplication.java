@@ -67,7 +67,11 @@ public class JacomoApplication {
             System.err.println("Can't connect to database: " + ex.getMessage());
             return false;
         }
-        botApp = new BotApplication(dbBackend);
+        if (botApp == null) {
+            botApp = new BotApplication(dbBackend);
+        } else {
+            botApp.setDbBackend(dbBackend);
+        }
         statsApp = new StatsApplication(dbBackend);
         return true;
     }
@@ -77,9 +81,7 @@ public class JacomoApplication {
      */
     public void stopDatabase() {
         if (dbBackend != null) {
-            // Note: botApp is not actally disposed and can be used again
-            // botApp.dispose() should bear another name (clear() or sth)
-            botApp.dispose();
+            botApp.shutdown();
             dbBackend.dispose();
             dbBackend = null;
             statsApp = null;
@@ -91,7 +93,7 @@ public class JacomoApplication {
      */
     public void dispose() {
         System.out.println("JacomoApplication dispose()");
-        botApp.dispose();
+        botApp.shutdown();
         stopDatabase();
     }
 

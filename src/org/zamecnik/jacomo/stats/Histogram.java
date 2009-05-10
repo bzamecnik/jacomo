@@ -23,29 +23,29 @@ public class Histogram {
     }
 
     /**
-     * Compute histogram from lists of intervals using a quantizer.
-     * First the presence intervals are quantized and summed to a repeating list
+     * Compute histogram from lists of intervals using a sampler.
+     * First the presence intervals are sampled and summed to a repeating list
      * of data bins. Then values in each group of bins are summed together.
      * @param intervalLists lists of intervals
-     * @param quantizer quantizer
+     * @param sampler sampler
      * @return computed histogram
      */
     public int[] computeHistogram(
             Collection<IntervalList> intervalLists,
-            Quantizer quantizer) {
-        int[] quantizationSums = quantizer.quantizeAndSum(intervalLists);
-        return computeHistogram(quantizationSums);
+            Sampler sampler) {
+        int[] samplingSums = sampler.sampleAndSum(intervalLists);
+        return computeHistogram(samplingSums);
     }
 
     /**
-     * Computed histogram from precomputed quantization sums.
-     * @param quantizationSums output of a quantizer
+     * Computed histogram from precomputed sampling sums.
+     * @param samplingSums output of a sampler
      * @return histogram
      */
-    public int[] computeHistogram(int[] quantizationSums) {
+    public int[] computeHistogram(int[] samplingSums) {
         int[] histogram = new int[histogramSize];
-        for (int i = 0; i < quantizationSums.length; i++) {
-            histogram[i % histogramSize] += quantizationSums[i];
+        for (int i = 0; i < samplingSums.length; i++) {
+            histogram[i % histogramSize] += samplingSums[i];
         }
         return histogram;
     }
@@ -53,14 +53,14 @@ public class Histogram {
     /**
      * Compute histogram and scale it to make the sum of all the data bins
      * equal 1.
-     * @param quantizationSums output of a quantizer
+     * @param samplingSums output of a sampler
      * @return scaled histogram
      */
-    public double[] computeScaledHistogram(int[] quantizationSums) {
-        int[] histogram = computeHistogram(quantizationSums);
+    public double[] computeScaledHistogram(int[] samplingSums) {
+        int[] histogram = computeHistogram(samplingSums);
         int total = 0;
-        for (int i = 0; i < quantizationSums.length; i++) {
-            total += quantizationSums[i];
+        for (int i = 0; i < samplingSums.length; i++) {
+            total += samplingSums[i];
         }
         double scaleFactor = 1.0 / (double) total;
         double[] scaledHistogram = new double[histogram.length];

@@ -24,20 +24,9 @@ import org.jivesoftware.smack.packet.*;
  * instance of ContactFilter.
  * <p>
  * You can start/stop jabber connection and logging separately. So it is
- * possible to pause logging without leaving Jabber server.
+ * possible to pause logging without leaving Jabber server. Or you can use
+ * convenience function startup() and shutdown().
  * <p>
- * <ul>
- *   <li>Startup procedure:</li>
- *   <ul>
- *     <li>call login() to connect to Jabber server</li>
- *     <li>call start() to start logging</li>
- *   </ul>
- *   <li>Shutdown procedure:</li>
- *   <ul>
- *     <li>call stop() to stop logging</li>
- *     <li>call logout() to disconnect to Jabber server</li>
- *   </ul>
- * </ul>
  * @author Bohumir Zamecnik
  */
 public class BotApplication {
@@ -97,8 +86,8 @@ public class BotApplication {
      * Start logging.
      */
     public void start() {
-        System.out.println("BotApplication.start()");
         if (state == LoggerState.PREPARED) {
+            System.out.println("BotApplication.start()");
             registerJabberHandlers();
             state = LoggerState.RUNNING;
             // log contacts being currently online
@@ -119,8 +108,8 @@ public class BotApplication {
      * Stop logging.
      */
     public void stop() {
-        System.out.println("BotApplication.stop()");
         if (state == LoggerState.RUNNING) {
+            System.out.println("BotApplication.stop()");
             unregisterJabberHandlers();
             state = LoggerState.PREPARED;
             // log contacts being currently online as they would have disconnected
@@ -144,10 +133,10 @@ public class BotApplication {
      * @return true if succesfully connected to Jabber server
      */
     public boolean login() {
-        System.out.println("BotApplication.login()");
         if (state != LoggerState.NOT_PREPARED) {
             return false;
         }
+        System.out.println("BotApplication.login()");
         String jabberServer = System.getProperty("jacomo.jabberServer");
         System.out.println("jabber server: " + jabberServer);
         if (jabberServer == null) {
@@ -210,6 +199,17 @@ public class BotApplication {
             jabberConnection.disconnect();
             state = LoggerState.NOT_PREPARED;
         }
+    }
+
+    public void startup() {
+        if(login()) {
+            start();
+        }
+    }
+
+    public void shutdown() {
+        stop();
+        logout();
     }
 
     /**
@@ -301,15 +301,6 @@ public class BotApplication {
     void unregisterJabberHandlers() {
         Roster roster = jabberConnection.getRoster();
         roster.removeRosterListener(rosterListener);
-    }
-
-    /**
-     * Stop logging and close Jabber connection.
-     * However, the bot application can be used again.
-     */
-    public void dispose() {
-        stop();
-        logout();
     }
 
     /**
