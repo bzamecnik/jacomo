@@ -16,12 +16,12 @@ import java.sql.Timestamp;
 
 /**
  * JavaDB database backend. Implementation of DBBackend using an embedded
- * JavaDB. The name of the database is given in the 'jacomo.dbName' system
- * property. The path to the database is given in the 'jacomo.homeDir' system
- * property.
+ * JavaDB. The name of the database is given in the {@code jacomo.dbName} system
+ * property. The path to the database is given in the  {@code jacomo.homeDir}
+ * system property.
  * <p>
  * The JavaDBBackend instance holds a database resource which has to be
- * freed when it is no longer needed. See the dispose() member function.
+ * freed when it is no longer needed. See the {@link #dispose()} member function.
  * @author Bohumir Zamecnik
  */
 public class JavaDBBackend implements DBBackend {
@@ -31,7 +31,8 @@ public class JavaDBBackend implements DBBackend {
      * Throw JacomoException if no database was specified or there is any
      * problem with database.
      * <p>
-     * Side effect: create directory for database.
+     * Side effect: create a directory for database (including parent
+     * directories).
      * @throws org.zamecnik.jacomo.lib.JacomoException
      */
     public JavaDBBackend() throws JacomoException {

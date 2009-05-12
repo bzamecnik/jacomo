@@ -18,10 +18,12 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 /**
- * Configure dialog. A dialog for setting some configuration data. Currently
- * used to configure Jabber account information. If the dialog was confirmend
- * (isConfirmed() == true) the data can be retrieved using following functions:
- * getJabberServer(), getJabberUsername(), getJabberPassword().
+ * A dialog for setting some configuration data. Currently it is used to
+ * configure Jabber account information. If the dialog was confirmend
+ * ({@link #isConfirmed()} == true) the data can be retrieved using following
+ * functions:
+ * {@link #getJabberServer()}, {@link #getJabberUsername()},
+ * {@link #getJabberPassword()}.
  *
  * @author Bohumir Zamecnik
  */

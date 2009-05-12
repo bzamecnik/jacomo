@@ -22,13 +22,16 @@ import org.zamecnik.jacomo.bot.BotApplication;
 import org.zamecnik.jacomo.stats.ChartsPanel;
 
 /**
- * Main JaCoMo application frame.
+ * Main JaCoMo application frame (i.e. window). Some application logic is
+ * located here.
  * @author Bohumir Zamecnik
  */
 public class MainFrame extends JFrame {
 
     /**
-     * MainFrame constructor.
+     * MainFrame constructor. Set up components inside. Register a handler to
+     * save properties and dispose the application (to free resources) when the
+     * window is closed.
      */
     public MainFrame() {
         setDefaultLookAndFeelDecorated(true);

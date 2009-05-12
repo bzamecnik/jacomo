@@ -21,11 +21,11 @@ import org.jivesoftware.smack.packet.*;
  * contacts to exclude.
  * <p>
  * A BotApplication instance holds a XMPPConnection resource and also an
- * instance of ContactFilter.
+ * instance of {@link ContactFilter}.
  * <p>
  * You can start/stop jabber connection and logging separately. So it is
  * possible to pause logging without leaving Jabber server. Or you can use
- * convenience function startup() and shutdown().
+ * convenience function {@link #startup()} and {@link #shutdown()}.
  * <p>
  * @author Bohumir Zamecnik
  */

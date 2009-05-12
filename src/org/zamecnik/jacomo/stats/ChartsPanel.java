@@ -6,8 +6,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingWorker;
 
 /**
- * Panel with statistic charts. It uses StatsApp to get the data. The charts
- * are only show when there are the data, otherwise they are hidden.
+ * GUI panel component containing some statistic charts. It uses StatsApp to get
+ * the data. The charts are only show when there are the data, otherwise they
+ * are hidden.
  * @author Bohumir Zamecnik
  */
 public class ChartsPanel extends JPanel {

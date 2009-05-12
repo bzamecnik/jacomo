@@ -47,16 +47,16 @@ public class PresenceChange {
     }
 
     /**
-     * Get contact id.
-     * @return the contactId
+     * Get database contact id.
+     * @return the database contact id
      */
     public int getContactId() {
         return contactId;
     }
 
     /**
-     * Set contact id.
-     * @param contactId the contactId to set
+     * Set database contact id.
+     * @param contactId the database contact id to set
      */
     private void setContactId(int contactId) {
         this.contactId = contactId;
@@ -96,7 +96,7 @@ public class PresenceChange {
 
     /**
      * Get presence status description.
-     * @return the statusDescription
+     * @return the status description
      */
     public String getStatusDescription() {
         return statusDescription;
@@ -104,7 +104,7 @@ public class PresenceChange {
 
     /**
      * Get presence status description.
-     * @param statusDescription the statusDescription to set
+     * @param statusDescription the status description to set
      */
     private void setStatusDescription(String statusDescription) {
         this.statusDescription = statusDescription;

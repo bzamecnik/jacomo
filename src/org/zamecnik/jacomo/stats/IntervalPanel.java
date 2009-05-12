@@ -32,7 +32,7 @@ import org.jfree.data.xy.XYIntervalSeriesCollection;
 import org.zamecnik.jacomo.lib.Contact;
 
 /**
- * Interval panel.
+ * Interval panel GUI component.
  * @author Bohumir Zamecnik
  */
 public class IntervalPanel extends JPanel {

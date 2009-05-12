@@ -9,7 +9,8 @@ import java.util.ListIterator;
 import org.zamecnik.jacomo.lib.PresenceStatus;
 
 /**
- * List of presence intervals. Currently it supports only online/offline status.
+ * List of presence intervals data class. Currently it supports only
+ * online/offline status.
  * It is implemented as a transition list of time points. Each odd item
  * represents the time point of going online, each even item change to offline
  * status.

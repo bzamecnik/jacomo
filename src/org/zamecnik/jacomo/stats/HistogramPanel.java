@@ -14,7 +14,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 /**
- * Histogram panel.
+ * Histogram panel GUI component.
  * @author Bohumir Zamecnik
  */
 public class HistogramPanel extends JPanel {

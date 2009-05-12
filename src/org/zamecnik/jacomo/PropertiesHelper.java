@@ -15,7 +15,7 @@ import java.util.Properties;
 public class PropertiesHelper {
 
     /**
-     * Initialize properties. Set <code>jacomo.homeDir</code> property and load
+     * Initialize properties. Set {@code jacomo.homeDir} property and load
      * properties from a config file.
      */
     public static void initProperties() {
@@ -26,9 +26,9 @@ public class PropertiesHelper {
 
     /**
      * Set Jabber specific properties. Also set a proper database name.
-     * @param server Jabber server set to jacomo.jabberServer property
-     * @param user Jabber account user name set to jacomo.jabberUser property
-     * @param password Jabber account password set to jacomo.jabberPassword property
+     * @param server Jabber server set to {@code jacomo.jabberServer} property
+     * @param user Jabber account user name set to {@code jacomo.jabberUser} property
+     * @param password Jabber account password set to {@code jacomo.jabberPassword} property
      */
     public static void setJabberProperties(
             String server, String user, String password) {
@@ -41,7 +41,7 @@ public class PropertiesHelper {
     /**
      * Compute a database name and set it as a property.
      * The database name is in form "USER_SERVER", eg. john.doe_jabber.com
-     * and is set to jacomo.dbName property.
+     * and is set to {@code jacomo.dbName} property.
      * @param server Jabber server
      * @param user Jabber account user name
      */
@@ -55,8 +55,8 @@ public class PropertiesHelper {
 
     /**
      * Load properties from a config file.
-     * The name of config file is specified in <code>CONFIG_FILE</code> and the
-     * directory is specified in the <code>jacomo.homeDir</code> property.
+     * The name of config file is specified in {@code CONFIG_FILE} and the
+     * directory is specified in the {@code jacomo.homeDir} property.
      * If the file doesn't exist no properties are loaded.
      */
     public static void loadProperties() {
@@ -82,8 +82,8 @@ public class PropertiesHelper {
 
     /**
      * Save properties to a config file.
-     * The name of config file is specified in <code>CONFIG_FILE</code> and the
-     * directory is specified in the <code>jacomo.homeDir</code> property.
+     * The name of config file is specified in {@code CONFIG_FILE} and the
+     * directory is specified in the {@code jacomo.homeDir} property.
      * The file is automatically created if it doesn't exist.
      */
     public static void saveProperties() {
