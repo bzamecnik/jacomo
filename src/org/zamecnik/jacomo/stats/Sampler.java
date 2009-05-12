@@ -122,7 +122,10 @@ public class Sampler {
         long lastPoint = roundTimePoint(lastDate.getTime(), true);
 
         // compute number of samples
-        int nSamples = (int) ((lastPoint - firstPoint));
+        int nSamples = (int)(lastPoint - firstPoint);
+        if (nSamples <= 0) {
+            return null;
+        }
         int[] summedSamples = new int[nSamples];
 
         // TODO: initialize summedSamples to 0 (is it automatic?)

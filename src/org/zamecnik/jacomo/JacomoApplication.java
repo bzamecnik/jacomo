@@ -94,7 +94,7 @@ public class JacomoApplication {
      * Dispose the application and free resources.
      */
     public void dispose() {
-        System.out.println("JacomoApplication dispose()");
+        System.out.println("JacomoApplication.dispose()");
         if (botApp != null) {
             botApp.shutdown();
         }

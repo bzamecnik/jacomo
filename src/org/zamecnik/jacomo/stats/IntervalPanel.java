@@ -96,7 +96,7 @@ public class IntervalPanel extends JPanel {
      * @param intervals interval list with contact information
      */
     public void setIntervals(Map<Contact, IntervalList> intervals) {
-        System.out.println("IntervalPanel.setIntervals()");
+        System.out.println("IntervalPanel: refreshing");
         // TODO: contact names could be sorted
         Set<Contact> contacts = intervals.keySet();
         List<String> contactNames = new ArrayList<String>();

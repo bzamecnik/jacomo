@@ -96,6 +96,8 @@ public class PropertiesHelper {
         // TODO: really store the password???
         props.setProperty("jacomo.jabberPassword",
                 System.getProperty("jacomo.jabberPassword"));
+        props.setProperty("jacomo.jabberContactsFilter",
+                System.getProperty("jacomo.jabberContactsFilter", ""));
         File propFile = new File(System.getProperty("jacomo.homeDir")
                 + File.separator + CONFIG_FILE);
         try {

@@ -57,6 +57,9 @@ public class Histogram {
      * @return scaled histogram
      */
     public double[] computeScaledHistogram(int[] samplingSums) {
+        if (samplingSums == null) {
+            return null;
+        }
         int[] histogram = computeHistogram(samplingSums);
         int total = 0;
         for (int i = 0; i < samplingSums.length; i++) {

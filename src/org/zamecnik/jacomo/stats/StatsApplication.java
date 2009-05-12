@@ -19,7 +19,6 @@ public class StatsApplication {
      */
     public StatsApplication(DBBackend dbBackend) {
         presenceManager = new PresenceManager(dbBackend);
-        presenceManager.reload();
         hourHistogram = Histogram.hourHistogram;
         hourSampler = Sampler.hourSampler;
         weekdayHistogram = Histogram.weekdayHistogram;

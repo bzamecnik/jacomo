@@ -31,7 +31,8 @@ public class MainFrame extends JFrame {
     /**
      * MainFrame constructor. Set up components inside. Register a handler to
      * save properties and dispose the application (to free resources) when the
-     * window is closed.
+     * window is closed. Some button actions run some database or network
+     * related operations in separate threads.
      */
     public MainFrame() {
         setDefaultLookAndFeelDecorated(true);
@@ -64,9 +65,6 @@ public class MainFrame extends JFrame {
                 if (dialog.isConfirmed()) {
                     String server = dialog.getJabberServer();
                     String username = dialog.getJabberUsername();
-                    PropertiesHelper.setJabberProperties(
-                            server, username,
-                            new String(dialog.getJabberPassword()));
                     jabberConfigServerLabel.setText(server);
                     jabberConfigUsernameLabel.setText(username);
                 }
@@ -97,16 +95,15 @@ public class MainFrame extends JFrame {
                                 try {
                                     databaseStarted = get();
                                 } catch (Exception ex) {
+                                    ex.printStackTrace();
                                 }
                                 if (databaseStarted) {
-                                    System.out.println("action listener (database): showing charts");
                                     chartsPanel.setStatsApp(app.getStatsApp());
                                     jabberButton.setEnabled(true);
                                     refreshButton.setEnabled(true);
                                 } else {
                                     databaseButton.setSelected(false); // rollback
                                     configButton.setEnabled(true);
-                                    System.out.println("action listener (database): rollback");
                                     return;
                                 }
                             }
@@ -158,9 +155,9 @@ public class MainFrame extends JFrame {
                     // TODO: use SwingWorker
                     BotApplication botApp = app.getBotApp();
                     if (selected) {
-                        botApp.login();
+                        botApp.start();
                     } else {
-                        botApp.logout();
+                        botApp.stop();
                     }
                 }
             }

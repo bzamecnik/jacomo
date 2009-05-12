@@ -50,6 +50,13 @@ public class ContactFilter {
     }
 
     /**
+     * Clear the filter.
+     */
+    public void clear() {
+        blacklistKeywords.clear();
+    }
+
+    /**
      * Set whether to exclude transport contacts.
      * @param exclude exclude transports on true
      */

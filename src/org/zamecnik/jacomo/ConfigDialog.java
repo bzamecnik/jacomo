@@ -15,7 +15,10 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
 
 /**
  * A dialog for setting some configuration data. Currently it is used to
@@ -41,6 +44,8 @@ public class ConfigDialog extends JDialog implements ActionListener {
                 System.getProperty("jacomo.jabberUser"));
         jabberPasswordField = new JPasswordField(
                 System.getProperty("jacomo.jabberPassword"));
+        contactFilterTextArea = new JTextArea(
+                System.getProperty("jacomo.jabberContactsFilter"), 15, 20);
 
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(this);
@@ -51,13 +56,34 @@ public class ConfigDialog extends JDialog implements ActionListener {
 
         JPanel mainPane = new JPanel();
         mainPane.setLayout(new BoxLayout(mainPane, BoxLayout.PAGE_AXIS));
-        mainPane.add(new JLabel("Jabber server:"));
-        mainPane.add(jabberServerTextField);
-        mainPane.add(new JLabel("Username:"));
-        mainPane.add(jabberUsernameTextField);
-        mainPane.add(new JLabel("Password:"));
-        mainPane.add(jabberPasswordField);
-        mainPane.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        JPanel jabberPane = new JPanel();
+        jabberPane.setLayout(new BoxLayout(jabberPane, BoxLayout.PAGE_AXIS));
+        jabberPane.add(new JLabel("Jabber server:"));
+        jabberPane.add(jabberServerTextField);
+        jabberPane.add(new JLabel("Username:"));
+        jabberPane.add(jabberUsernameTextField);
+        jabberPane.add(new JLabel("Password:"));
+        jabberPane.add(jabberPasswordField);
+        jabberPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(10, 10, 5, 10),
+                BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),
+                "Jabber credentials")));
+        mainPane.add(jabberPane);
+
+        JPanel contactFilterPane = new JPanel();
+        contactFilterPane.setLayout(new BoxLayout(contactFilterPane,
+                BoxLayout.PAGE_AXIS));
+        contactFilterPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(5, 10, 10, 10),
+                BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),
+                "Jabber contact filter")));
+        contactFilterTextArea.setToolTipText(
+                "Each line is a match critirium. Contacts containg " +
+                "anything from here will be excluded from logging.");
+        contactFilterPane.add(new JScrollPane(contactFilterTextArea));
+        mainPane.add(contactFilterPane);
 
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
@@ -83,6 +109,13 @@ public class ConfigDialog extends JDialog implements ActionListener {
             jabberServer = jabberServerTextField.getText();
             jabberUsername = jabberUsernameTextField.getText();
             jabberPassword = jabberPasswordField.getPassword();
+            contactFilter = contactFilterTextArea.getText();
+            PropertiesHelper.setJabberProperties(
+                            jabberServer, jabberUsername,
+                            new String(jabberPassword));
+            System.setProperty("jacomo.jabberContactsFilter", contactFilter);
+//            System.out.println("jacomo.jabberContactsFilter:\n" +
+//                    System.getProperty("jacomo.jabberContactsFilter", ""));
         }
         setVisible(false);
     }
@@ -90,11 +123,13 @@ public class ConfigDialog extends JDialog implements ActionListener {
     private JTextField jabberServerTextField;
     private JTextField jabberUsernameTextField;
     private JPasswordField jabberPasswordField;
+    private JTextArea contactFilterTextArea;
 
     private String jabberServer = "";
     private String jabberUsername = "";
     private char[] jabberPassword;
     private boolean confirmed;
+    private String contactFilter = "";
 
     /**
      * Get Jabber server.
@@ -140,5 +175,13 @@ public class ConfigDialog extends JDialog implements ActionListener {
      */
     public boolean isConfirmed() {
         return confirmed;
+    }
+
+    /**
+     * Get contact filter criteria.
+     * @return contact filter criteria
+     */
+    public String getContactFilter() {
+        return contactFilter;
     }
 }

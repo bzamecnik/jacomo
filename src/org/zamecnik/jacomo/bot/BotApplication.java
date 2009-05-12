@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
 
@@ -37,10 +38,7 @@ public class BotApplication {
 
         contactsCache = new java.util.HashSet<String>();
         contactFilter = new ContactFilter();
-        // sample filter data:
-        contactFilter.addBlacklistKeyword("tv.jabbim.cz");
-        contactFilter.addBlacklistKeyword("weather.netlab.cz");
-        contactFilter.addBlacklistKeyword("live@jabbim.cz"); // whole JID
+        updateContactFilter();
 
         this.dbBackend = dbBackend;
 
@@ -50,7 +48,7 @@ public class BotApplication {
                 for (String jid : addresses) {
                     jid = stripJID(jid);
                     if (contactFilter.filter(jid)) {
-                        System.out.println("entry added: " + jid);
+                        System.out.println("Contact added: " + jid);
                         enableContact(jid);
                     }
                 }
@@ -60,7 +58,7 @@ public class BotApplication {
                 for (String jid : addresses) {
                     jid = stripJID(jid);
                     if (contactFilter.filter(jid)) {
-                        System.out.println("entry deleted: " + jid);
+                        System.out.println("Contact deleted: " + jid);
                         disableContact(jid);
                     }
                 }
@@ -70,7 +68,7 @@ public class BotApplication {
                 for (String jid : addresses) {
                     jid = stripJID(jid);
                     if (contactFilter.filter(jid)) {
-                        System.out.println("entry updated: " + jid);
+                        System.out.println("Contact updated: " + jid);
                         updateContactName(jid);
                     }
                 }
@@ -138,7 +136,7 @@ public class BotApplication {
         }
         System.out.println("BotApplication.login()");
         String jabberServer = System.getProperty("jacomo.jabberServer");
-        System.out.println("jabber server: " + jabberServer);
+        System.out.println("Jabber server: " + jabberServer);
         if (jabberServer == null) {
             //throw new JacomoException("jacomo.jabberServer is not specified.");
             System.err.println("jacomo.jabberServer is not specified.");
@@ -213,11 +211,12 @@ public class BotApplication {
     }
 
     /**
-     * Set database backend.
+     * Set database backend. Also update contact filter.
      * @param dbBackend the database backend to set
      */
     public void setDbBackend(DBBackend dbBackend) {
         this.dbBackend = dbBackend;
+        updateContactFilter();
     }
 
     /**
@@ -255,7 +254,7 @@ public class BotApplication {
             Roster roster = jabberConnection.getRoster();
             RosterEntry entry = roster.getEntry(contact);
             if (entry != null) {
-                System.out.println("update contact name: " + contact + ", " + entry.getName());
+                System.out.println("Contact name updated: " + contact + ", " + entry.getName());
                 dbBackend.updateContactName(contact, entry.getName());
             }
         }
@@ -281,7 +280,7 @@ public class BotApplication {
         if ((jid != null) && contactFilter.filter(jid)) {
             PresenceStatus status = PresenceStatus.fromJabberPresence(presence);
             String statusDesctiption = presence.getStatus();
-            System.out.println("status changed: " + jid + " at " +
+            System.out.println("Status changed: " + jid + " at " +
                     date + ": " + status + " (" + statusDesctiption + ")");
             changeContactPresence(jid, date, status, statusDesctiption);
         }
@@ -301,6 +300,21 @@ public class BotApplication {
     void unregisterJabberHandlers() {
         Roster roster = jabberConnection.getRoster();
         roster.removeRosterListener(rosterListener);
+    }
+
+    void updateContactFilter() {
+        contactFilter.clear();
+        String filter = System.getProperty("jacomo.jabberContactsFilter", "");
+        StringTokenizer tokenizer = new StringTokenizer(filter);
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            System.out.println("Blacklist keyword: " + token);
+            contactFilter.addBlacklistKeyword(token);
+        }
+//        // sample filter data:
+//        contactFilter.addBlacklistKeyword("tv.jabbim.cz");
+//        contactFilter.addBlacklistKeyword("weather.netlab.cz");
+//        contactFilter.addBlacklistKeyword("live@jabbim.cz"); // whole JID
     }
 
     /**

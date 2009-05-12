@@ -1,5 +1,6 @@
 package org.zamecnik.jacomo.lib;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,7 +43,7 @@ public class JavaDBBackend implements DBBackend {
         }
         String strUrl = "jdbc:derby:" + dbName + ";create=true";
         String homeDir = System.getProperty("jacomo.homeDir", ".");
-        System.out.println("home directory:" + homeDir);
+        System.out.println("JavaDB database:" + homeDir + File.separator + dbName);
 
         // Create the home directory if it doesn't exist
         // Note: Derby will create that directory automatically
@@ -62,10 +63,10 @@ public class JavaDBBackend implements DBBackend {
             // create tables if we have created a new database
             ResultSet rs;
             DatabaseMetaData md = dbConnection.getMetaData();
-            System.out.println("database URL: " + md.getURL());
+            //System.out.println("database URL: " + md.getURL());
             rs = md.getTables(null, "APP", "Contacts".toUpperCase(), null);
             if (!rs.next()) {
-                System.out.println("creating tables");
+                System.out.println("Creating database tables.");
                 createTables();
             }
 
@@ -191,7 +192,7 @@ public class JavaDBBackend implements DBBackend {
      * @return new contact database id
      */
     public int enableContact(String contactJID, String name) {
-        System.out.println("enable contact: " + contactJID + " (" + name + ")");
+        System.out.println("Enable contact: " + contactJID + " (" + name + ")");
         // - look into Contacts table if we already have this contact
         int id = -1;
         boolean archived = false;
@@ -203,7 +204,6 @@ public class JavaDBBackend implements DBBackend {
                 id = rs.getInt(1);
                 archived = rs.getString(2).equals("Y");
             }
-            System.out.println("id: " + id + ", archived:" + archived);
             if (id != -1) {
                 if (archived) {
                     //   - yes: set 'archived' to 'N'
@@ -240,7 +240,6 @@ public class JavaDBBackend implements DBBackend {
     public void disableContact(String contactJID) {
         // look into Contacts table if the contact is already there
         int id = getContactId(contactJID);
-        System.out.println("id: " + id);
         if (id != -1) {
             // - yes: set 'archived' to 'Y'
             try {
@@ -270,7 +269,6 @@ public class JavaDBBackend implements DBBackend {
             String statusDescription) {
         int id = getContactId(contactJID);
         // TODO: what about archived contacts?
-        System.out.println("id: " + id);
         if (id != -1) {
             try {
                 stmtInsertContactPresenceChange.clearParameters();
@@ -292,7 +290,7 @@ public class JavaDBBackend implements DBBackend {
      */
     public void changeBotPresence(boolean online) {
         Date date = Calendar.getInstance().getTime();
-        System.out.println("change in bot presence: " +
+        System.out.println("Bot presence changed: " +
                 (online ? "ONLINE" : "OFFLINE") + ", "
                 + DateFormat.getDateTimeInstance().format(date));
         try {
@@ -437,7 +435,7 @@ public class JavaDBBackend implements DBBackend {
             stmtSelectContactByJid.setString(1, contactJID);
             ResultSet rs = stmtSelectContactByJid.executeQuery();
             if (rs.next()) {
-                if (includeArchived || rs.getString(2).equals("Y")) {
+                if (includeArchived || rs.getString(2).equals("N")) {
                     id = rs.getInt(1);
                 }
             }
@@ -451,7 +449,7 @@ public class JavaDBBackend implements DBBackend {
      * Dispose bot application. Free the database connection resource.
      */
     public void dispose() {
-        System.out.println("JavaDBBackend dispose()");
+        System.out.println("JavaDBBackend.dispose()");
         try {
             dbConnection.close();
         } catch(SQLException ex) {
