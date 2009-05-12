@@ -90,12 +90,12 @@ public class PropertiesHelper {
         // save properties to a file
         Properties props = new Properties();
         props.setProperty("jacomo.jabberServer",
-                System.getProperty("jacomo.jabberServer"));
+                System.getProperty("jacomo.jabberServer", ""));
         props.setProperty("jacomo.jabberUser",
-                System.getProperty("jacomo.jabberUser"));
+                System.getProperty("jacomo.jabberUser", ""));
         // TODO: really store the password???
         props.setProperty("jacomo.jabberPassword",
-                System.getProperty("jacomo.jabberPassword"));
+                System.getProperty("jacomo.jabberPassword", ""));
         props.setProperty("jacomo.jabberContactsFilter",
                 System.getProperty("jacomo.jabberContactsFilter", ""));
         File propFile = new File(System.getProperty("jacomo.homeDir")
